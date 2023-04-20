@@ -1,0 +1,7 @@
+; These are excluded from the GitHub linguist statistics
+app/ios/** linguist-generated
+app/android/** linguist-generated
+app/linux/** linguist-generated
+app/macos/** linguist-generated
+app/web/** linguist-generated
+app/windows/** linguist-generated
