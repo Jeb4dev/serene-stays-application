@@ -1,3 +1,5 @@
+from datetime import datetime
+
 from django.db import models
 from users.models import User
 from cabins.models import Cabin
@@ -20,12 +22,20 @@ class Reservation(models.Model):
     def __str__(self):
         return f"{self.cabin} {self.customer} {self.start_date} {self.end_date}"
 
+    @property
+    def length_of_stay(self) -> int:
+        start = datetime.strptime(self.start_date.__str__(), "%Y-%m-%d")
+        end = datetime.strptime(self.end_date.__str__(), "%Y-%m-%d")
+        return (end - start).days
+
     def get_total_cabin_price(self) -> tuple:
         """
         Returns the total price of the cabin for the reservation period.
         :return: tuple (total price, total price with VAT)
         """
-        return 0, 0
+        price = self.cabin.price_per_night * self.length_of_stay
+        vat = price * 0.24
+        return price, price + vat
 
     def get_total_services_price(self) -> tuple:
         """
