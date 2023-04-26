@@ -45,6 +45,7 @@ INSTALLED_APPS = [
     "api",
     "cabins",
     "reservations",
+    "services",
 ]
 
 MIDDLEWARE = [
