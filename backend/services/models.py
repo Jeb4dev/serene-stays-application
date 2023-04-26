@@ -1,5 +1,5 @@
 from django.db import models
-from .models import Cabin, Reservation
+from .models import Cabin
 
 class Service(models.Model):
     area = models.ForeignKey(Cabin, on_delete=models.CASCADE)
@@ -7,7 +7,7 @@ class Service(models.Model):
     description = models.CharField(max_length=255)
     service_price = models.DecimalField(max_digits=5, decimal_places=2)
     vat_price = models.DecimalField(max_digits=5, decimal_places=2)
-    
+
     
 
 
