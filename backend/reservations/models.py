@@ -1,4 +1,6 @@
 from django.db import models
+from users.models import User
+from cabins.models import Cabin
 
 
 class Reservation(models.Model):
@@ -6,9 +8,9 @@ class Reservation(models.Model):
     User model represents a customer or a staff member.
     """
 
-    cabin = models.ForeignKey("cabins.Cabin", on_delete=models.CASCADE)
-    customer = models.ForeignKey("users.User", on_delete=models.CASCADE)
-    owner = models.ForeignKey("users.User", on_delete=models.CASCADE)
+    cabin = models.ForeignKey(Cabin, on_delete=models.CASCADE)
+    customer = models.ForeignKey(User, on_delete=models.CASCADE, related_name="customer")
+    owner = models.ForeignKey(User, on_delete=models.CASCADE, related_name="owner")
     start_date = models.DateField(null=False, blank=False)
     end_date = models.DateField(null=False, blank=False)
     created_at = models.DateTimeField(auto_now_add=True)  # When the reservation was created by the customer
@@ -40,7 +42,7 @@ class Reservation(models.Model):
 
 
 class Invoice(models.Model):
-    reservation = models.ForeignKey("reservations.Reservation", on_delete=models.CASCADE)
+    reservation = models.ForeignKey(Reservation, on_delete=models.CASCADE)
     created_at = models.DateTimeField(auto_now_add=True)  # When the invoice was created
     paid_at = models.DateTimeField(null=True)  # When the invoice was paid
     canceled_at = models.DateTimeField(null=True)  # When the invoice was canceled
