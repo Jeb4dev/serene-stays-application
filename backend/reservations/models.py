@@ -1,8 +1,8 @@
 from datetime import datetime
-
 from django.db import models
 from users.models import User
 from cabins.models import Cabin
+from services.models import Service
 
 
 class Reservation(models.Model):
@@ -13,6 +13,7 @@ class Reservation(models.Model):
     cabin = models.ForeignKey(Cabin, on_delete=models.CASCADE)
     customer = models.ForeignKey(User, on_delete=models.CASCADE, related_name="customer")
     owner = models.ForeignKey(User, on_delete=models.CASCADE, related_name="owner")
+    services = models.ManyToManyField(Service, blank=True)
     start_date = models.DateField(null=False, blank=False)
     end_date = models.DateField(null=False, blank=False)
     created_at = models.DateTimeField(auto_now_add=True)  # When the reservation was created by the customer
@@ -28,27 +29,37 @@ class Reservation(models.Model):
         end = datetime.strptime(self.end_date.__str__(), "%Y-%m-%d")
         return (end - start).days
 
-    def get_total_cabin_price(self) -> tuple:
+    def get_total_cabin_price(self) -> float:
         """
         Returns the total price of the cabin for the reservation period.
-        :return: tuple (total price, total price with VAT)
         """
         price = self.cabin.price_per_night * self.length_of_stay
-        vat = price * 0.24
-        return price, price + vat
+        return price
 
-    def get_total_services_price(self) -> tuple:
+    def get_total_services_price(self) -> float:
         """
         Returns the total price of the services for the reservation period.
-        :return: tuple (total price, total price with VAT)
         """
-        return 0, 0
+        price = 0
+        for service in self.services.all():
+            price += service.service_price
+        return price
+
+    def get_total_price(self) -> float:
+        """
+        Returns the total price of the reservation.
+        """
+        price = self.get_total_cabin_price() + self.get_total_services_price()
+        return price
 
     def get_services(self) -> list:
         """
         Returns all the services that are included in the reservation.
         """
-        return []
+        services = []
+        for service in self.services.all():
+            services.append((service.name, service.service_price))
+        return services
 
 
 class Invoice(models.Model):
@@ -59,6 +70,14 @@ class Invoice(models.Model):
 
     def __str__(self):
         return f"{self.reservation}"
+
+    @property
+    def total_price(self) -> tuple:
+        """
+        Returns the total price of the reservation.
+        """
+        total_price = self.reservation.get_total_cabin_price() + self.reservation.get_total_services_price()
+        return total_price
 
     def get_invoice(self) -> str:
         """

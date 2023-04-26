@@ -1,5 +1,7 @@
 from django.test import TestCase
-from .models import Reservation
+
+from services.models import Service
+from .models import Reservation, Invoice
 from cabins.models import Cabin, AreaCode, PostCode
 from users.models import User
 
@@ -8,46 +10,146 @@ from users.models import User
 
 
 class TestReservation(TestCase):
+    def setUp(self) -> None:
+        self.area = AreaCode.objects.create(area="Helsinki", post_code="00100")
+        self.post = PostCode.objects.create(p_code=self.area, postal_district="Helsinki")
+        self.cabin = Cabin.objects.create(
+            name="Test Cabin",
+            description="Test Cabin",
+            price_per_night=100,
+            area=self.area,
+            zip_code=self.post,
+            num_of_beds=4,
+        )
+        self.customer = User.objects.create_user(username="JohnD", email="johndoe.example.com", password="password")
+        self.owner = User.objects.create_user(username="JaneD", email="janedoe.example.com", password="password")
+        self.services = []
+        sauna = Service.objects.create(area=self.area, name="Sauna", description="Sauna", service_price=10, vat_price=2)
+        hot_tub = Service.objects.create(
+            area=self.area, name="Hot Tub", description="Hot Tub", service_price=20, vat_price=4
+        )
+        self.services.append(sauna)
+        self.services.append(hot_tub)
 
-    def create_required_objects(self) -> tuple:
-        """
-        Creates a test area, customer, owner and a cabin.
-        :return: customer: User, owner: User, cabin: Cabin
-        """
-        area = AreaCode.objects.create(area="Tahko", post_code="10100")
-        cabin = Cabin.objects.create(name="Korpikartano", description="A luxurious villa with a sauna and a hot tub.",
-                                     price_per_night=10, area=area, num_of_beds=1)
-        customer = User.objects.create_user(username="JariA", email="jariaarni@mail.com", password="test")
-        owner = User.objects.create_user(username="KaiKo", email="kaikorpi@email.com", password="test")
-        return customer, owner, cabin
-
-    def test_reservation(self):
+    def test_create_reservation(self):
         """
         Tests that a reservation can be created.
         """
-        customer, owner, cabin = self.create_required_objects()
-        reservation = Reservation.objects.create(
-            cabin=cabin, customer=customer, owner=owner, start_date="2020-01-01", end_date="2020-01-04"
+        self.reservation = Reservation.objects.create(
+            cabin=self.cabin, customer=self.customer, owner=self.owner, start_date="2021-01-01", end_date="2021-01-02"
         )
-        self.assertEqual(reservation.cabin, cabin, "Reservation cabin does not match the cabin.")
-        self.assertEqual(reservation.customer, customer, "Reservation customer does not match the customer.")
-        self.assertEqual(reservation.owner, owner, "Reservation owner does not match the owner.")
-        self.assertEqual(reservation.start_date, "2020-01-01", "Reservation start date does not match the start date.")
-        self.assertEqual(reservation.end_date, "2020-01-04", "Reservation end date does not match the end date.")
-        self.assertEqual(reservation.length_of_stay, 3, "Reservation length of stay does not match the length of stay.")
+        self.reservation.services.add(self.services[1])
 
-    def test_get_total_cabin_price(self):
+        self.assertEqual(self.reservation.cabin, self.cabin)
+        self.assertEqual(self.reservation.customer, self.customer)
+        self.assertEqual(self.reservation.owner, self.owner)
+        self.assertEqual(self.reservation.start_date, "2021-01-01")
+        self.assertEqual(self.reservation.end_date, "2021-01-02")
+        self.assertEqual(self.reservation.services.all()[0], self.services[1])
+
+    def test_calculate_length_of_stay(self):
         """
-        Tests that the total cabin price is calculated correctly.
+        Tests that the length of stay is calculated correctly.
         """
-        customer, owner, cabin = self.create_required_objects()
-        reservation = Reservation.objects.create(
-            cabin=cabin, customer=customer, owner=owner, start_date="2020-01-01", end_date="2020-01-04"
+        self.reservation = Reservation.objects.create(
+            cabin=self.cabin, customer=self.customer, owner=self.owner, start_date="2021-01-01", end_date="2021-01-02"
         )
-        self.assertEqual(reservation.get_total_cabin_price(), (30, 37.2), "Total cabin price is not calculated correctly.")
+        self.assertEqual(self.reservation.length_of_stay, 1)
+        self.reservation = Reservation.objects.create(
+            cabin=self.cabin, customer=self.customer, owner=self.owner, start_date="2021-01-01", end_date="2021-01-03"
+        )
+        self.assertEqual(self.reservation.length_of_stay, 2)
+        self.reservation = Reservation.objects.create(
+            cabin=self.cabin, customer=self.customer, owner=self.owner, start_date="2021-01-01", end_date="2021-02-04"
+        )
+        self.assertEqual(self.reservation.length_of_stay, 34)
 
-    def test_get_total_services_price(self):
+    def test_calculate_price_of_cabin(self):
         """
-        Tests that the total services price is calculated correctly.
+        Tests that the price of the cabin is calculated correctly.
         """
-        pass
+
+        self.reservation = Reservation.objects.create(
+            cabin=self.cabin, customer=self.customer, owner=self.owner, start_date="2021-01-01", end_date="2021-01-02"
+        )
+        expected_price = self.reservation.length_of_stay * self.cabin.price_per_night
+        self.assertEqual(self.reservation.get_total_cabin_price(), expected_price)
+        self.reservation = Reservation.objects.create(
+            cabin=self.cabin, customer=self.customer, owner=self.owner, start_date="2021-01-01", end_date="2021-01-03"
+        )
+        expected_price = self.reservation.length_of_stay * self.cabin.price_per_night
+        self.assertEqual(self.reservation.get_total_cabin_price(), expected_price)
+
+    def test_calculate_price_of_services(self):
+        """
+        Tests that the price of the services is calculated correctly.
+        """
+        self.reservation = Reservation.objects.create(
+            cabin=self.cabin, customer=self.customer, owner=self.owner, start_date="2021-01-01", end_date="2021-01-02"
+        )
+        self.reservation.services.add(self.services[0])
+        expected_price = self.services[0].service_price
+        self.assertEqual(self.reservation.get_total_services_price(), expected_price)
+        self.reservation = Reservation.objects.create(
+            cabin=self.cabin, customer=self.customer, owner=self.owner, start_date="2021-01-01", end_date="2021-01-03"
+        )
+        self.reservation.services.add(self.services[1])
+        expected_price = self.services[1].service_price
+        self.assertEqual(self.reservation.get_total_services_price(), expected_price)
+
+    def test_calculate_total_price_of_reservation(self):
+        """
+        Tests that the total price of the reservation is calculated correctly.
+        """
+        self.reservation = Reservation.objects.create(
+            cabin=self.cabin, customer=self.customer, owner=self.owner, start_date="2021-01-01", end_date="2021-01-02"
+        )
+        self.reservation.services.add(self.services[0])
+        expected_price = (
+            self.reservation.cabin.price_per_night * self.reservation.length_of_stay
+            + self.reservation.services.all()[0].service_price
+        )
+        self.assertEqual(self.reservation.get_total_price(), expected_price)
+        self.reservation = Reservation.objects.create(
+            cabin=self.cabin, customer=self.customer, owner=self.owner, start_date="2021-01-01", end_date="2021-01-03"
+        )
+        self.reservation.services.add(self.services[1])
+        expected_price = (
+            self.reservation.cabin.price_per_night * self.reservation.length_of_stay + self.services[1].service_price
+        )
+        self.assertEqual(self.reservation.get_total_price(), expected_price)
+
+
+class TestInvoice(TestCase):
+    def setUp(self) -> None:
+        self.area = AreaCode.objects.create(area="Helsinki", post_code="00100")
+        self.post = PostCode.objects.create(p_code=self.area, postal_district="Helsinki")
+        self.cabin = Cabin.objects.create(
+            name="Test Cabin",
+            description="Test Cabin",
+            price_per_night=100,
+            area=self.area,
+            zip_code=self.post,
+            num_of_beds=4,
+        )
+        self.customer = User.objects.create_user(username="JohnD", email="johndoe.example.com", password="password")
+        self.owner = User.objects.create_user(username="JaneD", email="janedoe.example.com", password="password")
+        self.services = []
+        sauna = Service.objects.create(area=self.area, name="Sauna", description="Sauna", service_price=10, vat_price=2)
+        hot_tub = Service.objects.create(
+            area=self.area, name="Hot Tub", description="Hot Tub", service_price=20, vat_price=4
+        )
+        self.services.append(sauna)
+        self.services.append(hot_tub)
+
+    def test_create_invoice(self):
+        """
+        Tests that the invoice is created correctly.
+        """
+        self.reservation = Reservation.objects.create(
+            cabin=self.cabin, customer=self.customer, owner=self.owner, start_date="2021-01-01", end_date="2021-01-02"
+        )
+        self.reservation.services.add(self.services[1])
+        self.invoice = Invoice.objects.create(reservation=self.reservation)
+        self.assertEqual(self.invoice.reservation, self.reservation)
+        self.assertEqual(self.invoice.total_price, self.reservation.get_total_price())
