@@ -2,5 +2,5 @@ django
 djangorestframework
 django-oauth-toolkit
 django-cors-headers
-jwt
+djangorestframework-simplejwt
 black # code formatter
