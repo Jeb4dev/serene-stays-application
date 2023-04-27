@@ -43,6 +43,9 @@ INSTALLED_APPS = [
     "oauth2_provider",
     "users",
     "api",
+    "cabins",
+    "reservations",
+    "services",
 ]
 
 MIDDLEWARE = [

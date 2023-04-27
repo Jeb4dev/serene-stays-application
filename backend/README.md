@@ -16,6 +16,12 @@ It handles all the requests from the frontend and communicates with the database
 3. Run the migrations with `python manage.py migrate`
 4. Run the server with `python manage.py runserver`
 
+## Development
+
+### Formatting
+
+``python.exe -m black **/*.py --line-length 120``
+
 ## API
 
 ### Endpoints
