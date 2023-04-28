@@ -7,7 +7,7 @@ from services.models import Service
 
 class Reservation(models.Model):
     """
-    User model represents a customer or a staff member.
+    Model for a reservation of a cabin.
     """
 
     cabin = models.ForeignKey(Cabin, on_delete=models.CASCADE)
@@ -63,6 +63,9 @@ class Reservation(models.Model):
 
 
 class Invoice(models.Model):
+    """
+    Model for an invoice for a reservation.
+    """
     reservation = models.ForeignKey(Reservation, on_delete=models.CASCADE)
     created_at = models.DateTimeField(auto_now_add=True)  # When the invoice was created
     paid_at = models.DateTimeField(null=True)  # When the invoice was paid
