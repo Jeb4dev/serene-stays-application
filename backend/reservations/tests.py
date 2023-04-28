@@ -2,7 +2,7 @@ from django.test import TestCase
 
 from services.models import Service
 from .models import Reservation, Invoice
-from cabins.models import Cabin, AreaCode, PostCode
+from cabins.models import Cabin, Area, PostCode
 from users.models import User
 
 
@@ -11,8 +11,8 @@ from users.models import User
 
 class TestReservation(TestCase):
     def setUp(self) -> None:
-        self.area = AreaCode.objects.create(area="Helsinki", post_code="00100")
-        self.post = PostCode.objects.create(p_code=self.area, postal_district="Helsinki")
+        self.area = Area.objects.create(area="Helsinki")
+        self.post = PostCode.objects.create(p_code="10110", postal_district="Helsinki")
         self.cabin = Cabin.objects.create(
             name="Test Cabin",
             description="Test Cabin",
@@ -122,8 +122,8 @@ class TestReservation(TestCase):
 
 class TestInvoice(TestCase):
     def setUp(self) -> None:
-        self.area = AreaCode.objects.create(area="Helsinki", post_code="00100")
-        self.post = PostCode.objects.create(p_code=self.area, postal_district="Helsinki")
+        self.area = Area.objects.create(area="Helsinki")
+        self.post = PostCode.objects.create(p_code="10110", postal_district="Helsinki")
         self.cabin = Cabin.objects.create(
             name="Test Cabin",
             description="Test Cabin",

@@ -1,6 +1,6 @@
 from django.test import TestCase
 
-from cabins.models import AreaCode, PostCode
+from cabins.models import Area, PostCode
 from services.models import Service
 from users.models import User
 
@@ -12,8 +12,8 @@ class TestCabinApi(TestCase):
     def setUp(self) -> None:
         self.owner = User.objects.create_user(username="owner", password="owner", email="email@email.com")
         self.customer = User.objects.create_user(username="customer", password="customer", email="email@hotmail.com")
-        self.area = AreaCode.objects.create(area="Helsinki", post_code="00100")
-        self.post = PostCode.objects.create(p_code=self.area, postal_district="Helsinki")
+        self.area = Area.objects.create(area="Helsinki")
+        self.post = PostCode.objects.create(p_code="10110", postal_district="Helsinki")
 
     def test_cabin_creation(self):
         """
@@ -24,8 +24,8 @@ class TestCabinApi(TestCase):
             "name": "Test Cabin",
             "description": "Test Cabin",
             "price_per_night": 100,
-            "area": self.area.id,
-            "zip_code": self.post.id,
+            "area": self.area.area,
+            "zip_code": self.post.p_code,
             "num_of_beds": 4,
         }
 
@@ -46,7 +46,7 @@ class TestCabinApi(TestCase):
         # Create 5 different areas:
         areas = []
         for i in range(1, 6):
-            areas.append(AreaCode.objects.create(area=f"Area {i}", post_code=f"00{i}00"))
+            areas.append(Area.objects.create(area=f"Area {i}"))
 
         # Create 5 different post codes:
         post_codes = []
@@ -60,8 +60,8 @@ class TestCabinApi(TestCase):
                 "name": f"Cabin {i}",
                 "description": f"Cabin {i}",
                 "price_per_night": 100,
-                "area": areas[i // 2 - 1].id,
-                "zip_code": post_codes[i // 2 - 1].id,
+                "area": areas[i // 2 - 1].area,
+                "zip_code": post_codes[i // 2 - 1].p_code,
                 "num_of_beds": 4,
             })
             self.assertEqual(response.status_code, 201)
@@ -84,12 +84,12 @@ class TestCabinApi(TestCase):
         self.assertEqual(len(response.data["data"]), 10)
 
         # Test that the correct number of cabins are returned when a search parameter is given:
-        response = self.client.get("/api/area/cabins", {"area": areas[0].id})
+        response = self.client.get("/api/area/cabins", {"area": areas[0].area})
         self.assertEqual(response.status_code, 200)
         self.assertEqual(len(response.data["data"]), 2)
 
         # Test that the correct number of cabins are returned when searched by zip code:
-        response = self.client.get("/api/area/cabins", {"zip_code": post_codes[0].id})
+        response = self.client.get("/api/area/cabins", {"zip_code": post_codes[0].p_code})
         self.assertEqual(response.status_code, 200)
         self.assertEqual(len(response.data["data"]), 2)
 
@@ -99,13 +99,13 @@ class TestCabinApi(TestCase):
         self.assertEqual(len(response.data["data"]), 10)
 
         # Test that the correct number of cabins are returned when searched by zip code and area:
-        response = self.client.get("/api/area/cabins", {"area": areas[0].id, "zip_code": post_codes[0].id})
+        response = self.client.get("/api/area/cabins", {"area": areas[0].area, "zip_code": post_codes[0].p_code})
         self.assertEqual(response.status_code, 200)
         self.assertEqual(len(response.data["data"]), 2)
 
         # Test that the correct number of cabins are returned when searched by zip code, area and number of beds:
         response = self.client.get("/api/area/cabins",
-                                   {"area": areas[0].id, "zip_code": post_codes[0].id, "num_of_beds": 4})
+                                   {"area": areas[0].area, "zip_code": post_codes[0].p_code, "num_of_beds": 4})
         self.assertEqual(response.status_code, 200)
         self.assertEqual(len(response.data["data"]), 2)
 
@@ -131,17 +131,36 @@ class TestCabinApi(TestCase):
                 "name": f"New Cabin {cabin}",
                 "description": f"New Cabin desc {cabin}",
                 "price_per_night": 120.00,
-                "area": areas[2].id,
-                "zip_code": post_codes[2].id,
+                "area": str(areas[2].area),
+                "zip_code": str(post_codes[2].p_code),
                 "num_of_beds": 6
             }, content_type='application/json')
             self.assertEqual(response.status_code, 200)
             self.assertEqual(response.data["data"]["name"], f"New Cabin {cabin}")
             self.assertEqual(response.data["data"]["description"], f"New Cabin desc {cabin}")
             self.assertEqual(response.data["data"]["price_per_night"], format(float(120.00), '.2f'))
-            self.assertEqual(response.data["data"]["area"], areas[2].id)
-            self.assertEqual(response.data["data"]["zip_code"], post_codes[2].id)
+            self.assertEqual(response.data["data"]["area"], str(areas[2].area))
+            self.assertEqual(response.data["data"]["zip_code"], str(post_codes[2].p_code))
             self.assertEqual(response.data["data"]["num_of_beds"], 6)
+
+            # Search for the updated cabin:
+            response = self.client.get(f"/api/area/cabins", {"id": cabin})
+            self.assertEqual(response.status_code, 200)
+            self.assertEqual(response.data["data"]["name"], f"New Cabin {cabin}")
+
+    def test_delete_cabin(self):
+        """
+        Tests cabin deletion
+        """
+        cabins, services, areas, post_codes = self.create_dummy_data()
+
+        for cabin in cabins:
+            response = self.client.delete(f"/api/area/cabins/delete?id={cabin}")
+            self.assertEqual(response.status_code, 200)
+
+            # Search for the deleted cabin:
+            response = self.client.get(f"/api/area/cabins", {"id": cabin})
+            self.assertEqual(response.status_code, 404)
 
 
 class TestAreaApi(TestCase):
@@ -150,38 +169,57 @@ class TestAreaApi(TestCase):
         """
         Tests that an area can be created.
         """
-        pass
-        # data = {
-        #     "area": "Helsinki",
-        #     "post_code": "00100",
-        # }
-        #
-        # response = self.client.post("/api/area/create", data)
-        #
-        # self.assertEqual(response.status_code, 201)
-        # self.assertEqual(response.data["data"]["area"], data["area"])
-        # self.assertEqual(response.data["data"]["post_code"], data["post_code"])
+        data = {
+            "area": "Helsinki",
+        }
+        response = self.client.post("/api/area/create", data)
+        self.assertEqual(response.status_code, 201)
+        self.assertEqual(response.data["data"]["area"], data["area"])
 
-
-class TestServicesApi(TestCase):
-
-    def test_create_service(self):
+    def test_area_search(self):
         """
-        Tests that a service can be created.
+        Tests that an area can be searched.
         """
-        pass
-        # area = AreaCode.objects.create(area="Helsinki", post_code="00100")
-        # data = {
-        #     "area": area.id,
-        #     "name": "Sauna",
-        #     "description": "Sauna",
-        #     "service_price": 10,
-        #     "vat_price": 2,
-        # }
-        # response = self.client.post("/api/area/services/create", data)
-        # self.assertEqual(response.status_code, 201)
-        # self.assertEqual(response.data["data"]["area"], data["area"])
-        # self.assertEqual(response.data["data"]["name"], data["name"])
-        # self.assertEqual(response.data["data"]["description"], data["description"])
-        # self.assertEqual(response.data["data"]["service_price"], format(float(data["service_price"]), ".2f"))
-        # self.assertEqual(response.data["data"]["vat_price"], format(float(data["vat_price"]), ".2f"))
+        data = {
+            "area": "Helsinki",
+        }
+        response = self.client.post("/api/area/create", data)
+        self.assertEqual(response.status_code, 201)
+
+        response = self.client.get(f"/api/area/?area{data['area']}")
+        self.assertEqual(response.status_code, 200)
+        response_data = data = [dict(item) for item in response.data["data"]]
+        self.assertEqual(response_data, data)
+
+    def test_area_update(self):
+        """
+        Tests that an area can be updated.
+        """
+        data = {
+            "area": "Helsinki",
+        }
+        response = self.client.post("/api/area/create", data)
+        self.assertEqual(response.status_code, 201)
+
+        new_data = {
+            "area": "Malmi",
+        }
+        response = self.client.patch(f"/api/area/update?area={data['area']}", new_data, content_type='application/json')
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.data["data"]["area"], new_data["area"])
+
+    def test_area_delete(self):
+        """
+        Tests that an area can be deleted.
+        """
+        data = {
+            "area": "Helsinki",
+        }
+        response = self.client.post("/api/area/create", data)
+        self.assertEqual(response.status_code, 201)
+
+        response = self.client.delete(f"/api/area/delete?area={data['area']}")
+        self.assertEqual(response.status_code, 200)
+
+        response = self.client.get(f"/api/area/?area={data['area']}")
+        self.assertEqual(response.status_code, 404)
