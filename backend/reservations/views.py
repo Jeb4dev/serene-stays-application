@@ -21,7 +21,7 @@ def create_reservation(request):
     try:
         serializer = ReservationSerializer(data=request.data)
         serializer.is_valid(raise_exception=True)
-        serializer.save()
+        serializer.create(serializer.validated_data)
         return Response({"result": "success", "data": serializer.data}, status=status.HTTP_201_CREATED)
     except ValidationError as e:
         return Response({"result": "error", "message": e.detail}, status=status.HTTP_400_BAD_REQUEST)
@@ -35,10 +35,12 @@ def get_reservations(request):
     Returns all reservations.
     """
     try:
-        reservation_id = request.GET.get("id")
+        reservation_id = request.GET.get("reservation")
         reservations = Reservation.objects.all()
         if reservation_id:
-            reservations = get_object_or_404(Reservation, pk=reservation_id)
+            reservations = reservations.filter(pk=reservation_id)
+        if not reservations:
+            raise Http404
         serializer = ReservationSerializer(reservations, many=True)
         return Response({"result": "success", "data": serializer.data}, status=status.HTTP_200_OK)
     except Http404:
@@ -49,17 +51,18 @@ def get_reservations(request):
         return Response({"result": "error", "message": str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
 
-@api_view(["PUT"])
+@api_view(["PATCH"])
 def update_reservation(request):
     """
     Updates a reservation.
     """
     try:
-        reservation_id = request.data.get("id")
+        reservation_id = request.GET.get("reservation")
         reservation = get_object_or_404(Reservation, pk=reservation_id)
-        serializer = ReservationSerializer(reservation, data=request.data)
+        serializer = ReservationSerializer(reservation, data=request.data, partial=True)
         serializer.is_valid(raise_exception=True)
         serializer.save()
+
         return Response({"result": "success", "data": serializer.data}, status=status.HTTP_200_OK)
     except Http404:
         return Response({"result": "error", "message": "No reservations found"}, status=status.HTTP_404_NOT_FOUND)
@@ -75,7 +78,9 @@ def delete_reservation(request):
     Deletes a reservation.
     """
     try:
-        reservation_id = request.data.get("id")
+        reservation_id = request.GET.get("reservation")
+        if not reservation_id:
+            raise ValidationError("Reservation ID is required")
         reservation = get_object_or_404(Reservation, pk=reservation_id)
         reservation.delete()
         return Response({"result": "success", "message": "Reservation deleted"}, status=status.HTTP_200_OK)

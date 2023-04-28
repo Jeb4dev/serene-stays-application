@@ -14,6 +14,7 @@ class ReservationSerializer(serializers.ModelSerializer):
         fields = [
             "cabin",
             "customer",
+            "owner",
             "services",
             "start_date",
             "end_date",
@@ -38,7 +39,6 @@ class ReservationSerializer(serializers.ModelSerializer):
             :param validated_data: reservation data
             :return: updated reservation object
             """
-
             if instance.canceled_at:
                 raise serializers.ValidationError("Cannot update a canceled reservation")
             if instance.accepted_at and validated_data.get("accepted_at"):

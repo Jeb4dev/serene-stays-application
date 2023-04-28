@@ -293,30 +293,167 @@ class TestReservationApi(TestCase):
         """
         Tests that a reservation can be created.
         """
-        # THIS TEST FAILS
+        response = self.client.post("/api/reservation/create", {
+            "cabin": self.cabin.id,
+            "customer": self.customer.id,
+            "owner": self.owner.id,
+            "start_date": datetime.date.today(),
+            "end_date": datetime.date.today() + datetime.timedelta(days=2),
+            "services": [self.service.id]
+        })
 
-        # response = self.client.post("/api/reservation/create", {
-        #     "cabin": self.cabin.id,
-        #     "customer": self.customer.id,
-        #     "owner": self.owner.id,
-        #     "start_date": datetime.date.today(),
-        #     "end_date": datetime.date.today() + datetime.timedelta(days=2),
-        #     "services": [self.service.id]
-        # })
-        # self.assertEqual(response.status_code, 201)
-        # self.assertEqual(response.data["data"]["cabin"], self.cabin.id)
-        # self.assertEqual(response.data["data"]["customer"], self.customer.id)
-        # self.assertEqual(response.data["data"]["owner"], self.owner.id)
-        # self.assertEqual(response.data["data"]["start_date"], str(datetime.date.today()))
-        # self.assertEqual(response.data["data"]["end_date"], str(datetime.date.today() + datetime.timedelta(days=2)))
-        # self.assertEqual(response.data["data"]["services"], [self.service.id])
-        #
-        # self.reservation = Reservation.objects.get(id=response.data["data"]["id"])
-        # self.assertEqual(self.reservation.cabin, self.cabin)
-        # self.assertEqual(self.reservation.customer, self.customer)
-        # self.assertEqual(self.reservation.owner, self.owner)
-        # self.assertEqual(self.reservation.start_date, datetime.date.today())
-        # self.assertEqual(self.reservation.end_date, datetime.date.today() + datetime.timedelta(days=2))
-        # self.assertEqual(list(self.reservation.services.all()), [self.service])
-        # self.assertEqual(self.reservation.total_price, 224.0)
-        # self.assertEqual(self.reservation.length_of_stay, 2)
+        self.assertEqual(response.status_code, 201)
+        self.assertEqual(response.data["data"]["cabin"], self.cabin.id)
+        self.assertEqual(response.data["data"]["customer"], self.customer.id)
+        self.assertEqual(response.data["data"]["owner"], self.owner.id)
+        self.assertEqual(response.data["data"]["start_date"], str(datetime.date.today()))
+        self.assertEqual(response.data["data"]["end_date"], str(datetime.date.today() + datetime.timedelta(days=2)))
+
+        self.reservation = Reservation.objects.all().first()
+        self.assertEqual(self.reservation.cabin, self.cabin)
+        self.assertEqual(self.reservation.customer, self.customer)
+        self.assertEqual(self.reservation.owner, self.owner)
+        self.assertEqual(self.reservation.start_date, datetime.date.today())
+        self.assertEqual(self.reservation.end_date, datetime.date.today() + datetime.timedelta(days=2))
+        self.assertEqual(list(self.reservation.services.all()), [self.service])
+        self.assertEqual(str(self.reservation.get_total_price()), format(210, '.2f'))
+        self.assertEqual(self.reservation.length_of_stay, 2)
+
+    def test_reservation_get(self):
+        """
+        Tests that a reservation can be retrieved.
+        """
+        self.reservation = Reservation.objects.create(
+            cabin=self.cabin,
+            customer=self.customer,
+            owner=self.owner,
+            start_date=datetime.date.today(),
+            end_date=datetime.date.today() + datetime.timedelta(days=2),
+        )
+
+        response = self.client.get(f"/api/reservation/")
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.data["data"][0]["cabin"], self.cabin.id)
+        self.assertEqual(response.data["data"][0]["customer"], self.customer.id)
+        self.assertEqual(len(response.data["data"]), 1)
+
+    def test_reservation_search(self):
+        """
+        Tests that a reservation can be searched.
+        """
+        self.reservation = Reservation.objects.create(
+            cabin=self.cabin,
+            customer=self.customer,
+            owner=self.owner,
+            start_date=datetime.date.today(),
+            end_date=datetime.date.today() + datetime.timedelta(days=2),
+        )
+
+        response = self.client.get(f"/api/reservation/?reservation={self.reservation.id}")
+        self.assertEqual(response.status_code, 200)
+
+    def test_reservation_update(self):
+        """
+        Tests that a reservation can be updated.
+        """
+        self.reservation = Reservation.objects.create(
+            cabin=self.cabin,
+            customer=self.customer,
+            owner=self.owner,
+            start_date=datetime.date.today(),
+            end_date=datetime.date.today() + datetime.timedelta(days=2),
+        )
+
+        response = self.client.patch(f"/api/reservation/update?reservation={self.reservation.id}", {
+            "start_date": datetime.date.today() + datetime.timedelta(days=1),
+            "end_date": datetime.date.today() + datetime.timedelta(days=3),
+        }, content_type='application/json')
+
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.data["data"]["start_date"], str(datetime.date.today() + datetime.timedelta(days=1)))
+        self.assertEqual(response.data["data"]["end_date"], str(datetime.date.today() + datetime.timedelta(days=3)))
+
+        # Check that the reservation was updated
+
+        response = self.client.get(f"/api/reservation/?reservation={self.reservation.id}")
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.data["data"][0]["start_date"], str(datetime.date.today() + datetime.timedelta(days=1)))
+        self.assertEqual(response.data["data"][0]["end_date"], str(datetime.date.today() + datetime.timedelta(days=3)))
+
+    def test_reservation_update_not_found(self):
+        """
+        Tests updating a reservation that does not exist.
+        """
+        response = self.client.patch(f"/api/reservation/update?reservation=1", {
+            "start_date": datetime.date.today() + datetime.timedelta(days=1),
+            "end_date": datetime.date.today() + datetime.timedelta(days=3),
+        }, content_type='application/json')
+
+        self.assertEqual(response.status_code, 404)
+        self.assertEqual(response.data["message"], "No reservations found")
+
+    def test_reservation_update_when_cancelled(self):
+        """
+        Tests updating a reservation that has been cancelled.
+        """
+        # Create a reservation
+        response = self.client.post(f"/api/reservation/create", {
+            "cabin": self.cabin.id,
+            "customer": self.customer.id,
+            "owner": self.owner.id,
+            "start_date": datetime.date.today(),
+            "end_date": datetime.date.today() + datetime.timedelta(days=2),
+            "services": [self.service.id],
+        }, content_type='application/json')
+
+        self.assertEqual(response.status_code, 201)
+
+        # Cancel the reservation
+        response = self.client.patch(f"/api/reservation/update?reservation=1", data={
+            "canceled_at": datetime.datetime.now(),
+        }, content_type='application/json')
+        print(response.data)
+        self.assertEqual(response.status_code, 200)
+
+        # Cancel the reservation again
+        response = self.client.patch(f"/api/reservation/update?reservation=1", data={
+            "canceled_at": datetime.datetime.now()+datetime.timedelta(days=1),
+        }, content_type='application/json')
+        print(response.data)
+        self.assertEqual(response.status_code, 400)
+        self.assertEqual(response.data["message"], "Cannot update a cancelled reservation")
+
+    def test_reservation_delete(self):
+        """
+        Tests that a reservation can be deleted.
+        """
+        self.reservation = Reservation.objects.create(
+            cabin=self.cabin,
+            customer=self.customer,
+            owner=self.owner,
+            start_date=datetime.date.today(),
+            end_date=datetime.date.today() + datetime.timedelta(days=2),
+        )
+
+        response = self.client.delete(f"/api/reservation/delete?reservation={self.reservation.id}")
+        self.assertEqual(response.status_code, 200)
+
+        # Check that the reservation was deleted
+        response = self.client.get(f"/api/reservation/?reservation={self.reservation.id}")
+        self.assertEqual(response.status_code, 404)
+        self.assertEqual(response.data["message"], "No reservations found")
+
+    def test_reservation_delete_not_found(self):
+        """
+        Tests deleting a reservation that does not exist.
+        """
+        response = self.client.delete(f"/api/reservation/delete?reservation=1")
+        self.assertEqual(response.status_code, 404)
+        self.assertEqual(response.data["message"], "No reservations found")
+
+    def test_reservation_delete_no_id(self):
+        """
+        Tests deleting a reservation without an id.
+        """
+        response = self.client.delete(f"/api/reservation/delete")
+        self.assertEqual(response.status_code, 400)
