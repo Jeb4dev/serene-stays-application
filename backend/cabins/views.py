@@ -10,7 +10,6 @@ from cabins.models import Cabin
 from cabins.serializers import CabinSerializer, PostCodeSerializer, AreaCodeSerializer
 
 
-
 @api_view(["POST"])
 def create_cabin(request):
     """
@@ -70,6 +69,46 @@ def get_cabins(request):
         return Response({"result": "error", "message": "No cabins found"}, status=status.HTTP_404_NOT_FOUND)
     except ValidationError as e:
         return Response({"result": "error", "message": e.detail}, status=status.HTTP_400_BAD_REQUEST)
+    except Exception as e:
+        return Response({"result": "error", "message": str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+
+
+@api_view(["PATCH"])
+def update_cabin(request):
+    """
+    Updates a cabin.
+    :param request: PUT request with updated cabin data
+    :return: JSON response with updated cabin data or error message
+    """
+    try:
+        cabin_id = request.query_params.get("id")
+        cabin = get_object_or_404(Cabin, pk=cabin_id)
+        serializer = CabinSerializer(cabin, data=request.data, partial=True)
+        serializer.is_valid(raise_exception=True)
+        serializer.save()
+        return Response({"result": "success", "data": serializer.data}, status=status.HTTP_200_OK)
+    except Http404:
+        return Response({"result": "error", "message": "No cabin found"}, status=status.HTTP_404_NOT_FOUND)
+    except ValidationError as e:
+        return Response({"result": "error", "message": e.detail}, status=status.HTTP_400_BAD_REQUEST)
+    except Exception as e:
+        return Response({"result": "error", "message": str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+
+
+@api_view(["DELETE"])
+def delete_cabin(request):
+    """
+    Deletes a cabin.
+    :param request: DELETE request with cabin id
+    :return: JSON response with success message or error message
+    """
+    try:
+        cabin_id = request.GET.get("id")
+        cabin = get_object_or_404(Cabin, pk=cabin_id)
+        cabin.delete()
+        return Response({"result": "success", "message": "Cabin deleted successfully"}, status=status.HTTP_200_OK)
+    except Http404:
+        return Response({"result": "error", "message": "No cabin found"}, status=status.HTTP_404_NOT_FOUND)
     except Exception as e:
         return Response({"result": "error", "message": str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 

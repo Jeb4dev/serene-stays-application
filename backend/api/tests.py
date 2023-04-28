@@ -51,7 +51,7 @@ class TestCabinApi(TestCase):
         # Create 5 different post codes:
         post_codes = []
         for i in range(1, 6):
-            post_codes.append(PostCode.objects.create(p_code=areas[i-1], postal_district=f"District {i}"))
+            post_codes.append(PostCode.objects.create(p_code=areas[i - 1], postal_district=f"District {i}"))
 
         # Create 10 different cabins:
         cabins = []
@@ -60,8 +60,8 @@ class TestCabinApi(TestCase):
                 "name": f"Cabin {i}",
                 "description": f"Cabin {i}",
                 "price_per_night": 100,
-                "area": areas[i//2-1].id,
-                "zip_code": post_codes[i//2-1].id,
+                "area": areas[i // 2 - 1].id,
+                "zip_code": post_codes[i // 2 - 1].id,
                 "num_of_beds": 4,
             })
             self.assertEqual(response.status_code, 201)
@@ -104,7 +104,8 @@ class TestCabinApi(TestCase):
         self.assertEqual(len(response.data["data"]), 2)
 
         # Test that the correct number of cabins are returned when searched by zip code, area and number of beds:
-        response = self.client.get("/api/area/cabins", {"area": areas[0].id, "zip_code": post_codes[0].id, "num_of_beds": 4})
+        response = self.client.get("/api/area/cabins",
+                                   {"area": areas[0].id, "zip_code": post_codes[0].id, "num_of_beds": 4})
         self.assertEqual(response.status_code, 200)
         self.assertEqual(len(response.data["data"]), 2)
 
@@ -118,6 +119,29 @@ class TestCabinApi(TestCase):
             response = self.client.get(f"/api/area/cabins", {"id": cabin})
             self.assertEqual(response.status_code, 200)
             self.assertEqual(response.data["data"]["name"], f"Cabin {cabin}")
+
+    def test_update_cabin_info(self):
+        """
+        Tests that a cabin's info can be updated.
+        """
+        cabins, services, areas, post_codes = self.create_dummy_data()
+
+        for cabin in cabins:
+            response = self.client.patch(f"/api/area/cabins/update?id={cabin}", {
+                "name": f"New Cabin {cabin}",
+                "description": f"New Cabin desc {cabin}",
+                "price_per_night": 120.00,
+                "area": areas[2].id,
+                "zip_code": post_codes[2].id,
+                "num_of_beds": 6
+            }, content_type='application/json')
+            self.assertEqual(response.status_code, 200)
+            self.assertEqual(response.data["data"]["name"], f"New Cabin {cabin}")
+            self.assertEqual(response.data["data"]["description"], f"New Cabin desc {cabin}")
+            self.assertEqual(response.data["data"]["price_per_night"], format(float(120.00), '.2f'))
+            self.assertEqual(response.data["data"]["area"], areas[2].id)
+            self.assertEqual(response.data["data"]["zip_code"], post_codes[2].id)
+            self.assertEqual(response.data["data"]["num_of_beds"], 6)
 
 
 class TestAreaApi(TestCase):
