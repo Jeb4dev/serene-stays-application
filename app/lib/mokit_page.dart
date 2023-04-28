@@ -4,8 +4,8 @@ import 'package:flutter/material.dart';
 
 const int itemCount = 10;
 
-class ProfilePage extends StatelessWidget {
-  const ProfilePage({super.key});
+class MokitPage extends StatelessWidget {
+  const MokitPage({super.key});
 
   @override
   Widget build(BuildContext context) {
@@ -13,7 +13,7 @@ class ProfilePage extends StatelessWidget {
         itemCount: itemCount,
         itemBuilder: (BuildContext context, int index) {
           return ListTile(
-              title: Text('Cabin ${index + 1}'),
+            title: Text('Cabin ${index + 1}'),
           );
         });
   }

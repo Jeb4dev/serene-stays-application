@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-
 import 'home_page.dart';
 
 class LoginPage extends StatefulWidget {
@@ -42,10 +41,8 @@ class _LoginPageState extends State<LoginPage> {
               ),
               ElevatedButton(
                 onPressed: () {
-                  Navigator.pushReplacement(
-                      context,
-                      MaterialPageRoute(
-                          builder: (context) => const HomePage()));
+                  Navigator.pushReplacement(context,
+                      MaterialPageRoute(builder: (context) => HomePage()));
                 },
                 child: const Text('Kirjaudu'),
               ),
