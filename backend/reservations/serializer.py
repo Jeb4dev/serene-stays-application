@@ -13,7 +13,7 @@ class ReservationSerializer(serializers.ModelSerializer):
         model = Reservation
         fields = [
             "cabin",
-            "customer"
+            "customer",
             "services",
             "start_date",
             "end_date",
