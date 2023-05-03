@@ -1,8 +1,12 @@
+from django.http import Http404
 from rest_framework import status
 from rest_framework.decorators import api_view
+from rest_framework.generics import get_object_or_404
 from rest_framework.response import Response
 from rest_framework.exceptions import AuthenticationFailed, ValidationError
 from .serializers import ServiceSerializer
+from services.models import Service
+
 
 
 
@@ -24,7 +28,7 @@ def create_service(request):
     
     # Throw exception if validation errors occur
     except ValidationError as e:
-        return Response({"resul": "error", "message": e.detail}, status=status.HTTP_400_BAD_REQUEST)
+        return Response({"result": "error", "message": e.detail}, status=status.HTTP_400_BAD_REQUEST)
     # If unexpected error occurs, return a 500 response
     except Exception as e:
         return Response({"result": "error", "message": str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
@@ -35,7 +39,42 @@ def get_service(request):
     """
     Gets a service.
     """
-    return Response({}, status=status.HTTP_404_NOT_FOUND)
+    try:
+        area = request.GET.get("area")
+        name = request.GET.get("name")
+        description = request.GET.get("description") # how to tie to service name?
+        service_price = request.GET.get("service_price")
+        vat_price = request.GET.get("vat_price")
+
+        # Do we need to fetch all services ?
+        services = Service.objects.all(Service,)
+
+        # Should description be tied to the service name?
+        # how do we filter the services? by description first? or the set primary_key that is area?
+        if area:
+           service = get_object_or_404(Service, pk=area)
+           serializer = ServiceSerializer(service)
+           return Response({"result": "success", "data": serializer.data}, status=status.HTTP_404_NOT_FOUND)
+       
+       # Filter by other params
+        if name:
+           services = services.filter(name=name)
+        if service_price:
+           services = services.filter(service_price=vat_price)
+        
+        if not services:
+            raise Http404
+        
+        # Serialize and return data
+        serializer = ServiceSerializer(services, many=True)
+        return Response({"result": "success", "data": serializer.data}, status=status.HTTP_200_OK)
+    
+    except Http404:
+        return Response({"result": "error", "message": "No services found"}, status=status.HTTP_404_NOT_FOUND)
+    except ValidationError as e:
+        return Response({"result": "error", "message": e.detail}, status=status.HTTP_400_BAD_REQUEST)
+    except Exception as e:
+        return Response({"result": "error", "message": str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
 
 @api_view(["PUT"])
@@ -43,7 +82,20 @@ def update_service(request):
     """
     Updates a service.
     """
-    return Response({}, status=status.HTTP_404_NOT_FOUND)
+    try:
+        area = request.query_params.get("area")
+        service = get_object_or_404(Service, pk=area)
+        serializer = ServiceSerializer(service, data=request.data, partial=True)
+        serializer.is_valid(raise_exception=True)
+        serializer.save()
+        return Response({"result": "success", "data": serializer.data}, status=status.HTTP_200_OK)
+    except Http404:
+        return Response({"result": "error", "message": "No service found"}, status=status.HTTP_404_NOT_FOUND)
+    except ValidationError as e:
+        return Response({"result": "error", "message": e.detail}, status=status.HTTP_400_BAD_REQUEST)
+    except Exception as e:
+        return Response({"result": "error", "message": str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+
 
 
 @api_view(["DELETE"])
@@ -51,4 +103,13 @@ def delete_service(request):
     """
     Deletes a service.
     """
-    return Response({}, status=status.HTTP_404_NOT_FOUND)
+    try:
+        area = request.query_params.get("area")
+        service = get_object_or_404(Service, pk=area)
+        service.delete()
+        return Response({"result": "success", "message": "Service deleted successfully"}, status=status.HTTP_200_OK)
+    except Http404:
+        return Response({"result": "error", "message": "No service found"}, status=status.HTTP_404_NOT_FOUND)
+    except Exception as e:
+        return Response({"result": "error", "message": str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+
