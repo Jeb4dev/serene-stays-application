@@ -209,7 +209,8 @@ class TestAreaApi(APITestCase):
         new_data = {
             "area": "Malmi",
         }
-        response = self.client.patch(f"/api/area/update?area={data['area']}", json.dumps(new_data), content_type="application/json")
+        response = self.client.patch(f"/api/area/update?area={data['area']}", json.dumps(new_data),
+                                     content_type="application/json")
         self.assertEqual(response.status_code, 200)
         self.assertEqual(response.data["data"]["area"], new_data["area"])
 
@@ -263,6 +264,81 @@ class TestInvoiceApi(APITestCase):
 
         self.reservation.services.add(service)
 
+        response = self.client.post("/api/user/login", {
+            "email": "customer@email.com",
+            "password": "customer",
+        })
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.token = response.data.pop("jwt")
+        self.assertTrue(self.token)
+
+        self.client.credentials(HTTP_AUTHORIZATION=f"Bearer {self.token}")
+
+    def test_create_invoice(self):
+        pass
+
+    def test_get_invoice(self):
+        """
+        Tests that an invoice can be retrieved.
+        """
+        # Create an invoice directly:
+        invoice = Invoice.objects.create(reservation=self.reservation)
+
+        # Search for the invoice:
+        response = self.client.get(f"/api/reservation/invoice?invoice={invoice.id}")
+        response_data = [dict(item) for item in response.data["data"]]
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response_data[0]['reservation'], self.reservation.id)
+
+    def test_get_invoice_when_not_owner(self):
+        """
+        Tests that an invoice can be retrieved.
+        """
+        # Create a reservation directly:
+        reservation = Reservation.objects.create(
+            cabin=self.cabin,
+            customer=self.owner,
+            owner=self.owner,
+            start_date=datetime.date.today(),
+            end_date=datetime.date.today() + datetime.timedelta(days=2),
+        )
+
+        # Create an invoice directly:
+        Invoice.objects.create(reservation=self.reservation)
+        Invoice.objects.create(reservation=reservation)
+        Invoice.objects.create(reservation=reservation)
+        Invoice.objects.create(reservation=reservation)
+
+        # Search for the invoice:
+        response = self.client.get(f"/api/reservation/invoice")
+        self.assertEqual(response.status_code, 200)
+        response_data = [dict(item) for item in response.data["data"]]
+        self.assertEqual(response_data[0]['reservation'], self.reservation.id)
+        self.assertEqual(len(response_data), 1)
+
+        # Check as admin user
+        self.customer.is_staff = True
+        self.customer.save()
+        response = self.client.get(f"/api/reservation/invoice")
+        response_data = [dict(item) for item in response.data["data"]]
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response_data[0]['reservation'], self.reservation.id)
+        self.assertEqual(len(response_data), 4)
+
+    # def test_update_invoice(self):
+    #     """
+    #     Tests that an invoice can be updated.
+    #     """
+    #     # Create an invoice directly:
+    #     invoice = Invoice.objects.create(reservation=self.reservation)
+    #
+    #     # Update the invoice:
+    #     response = self.client.patch(f"/api/reservation/invoice?invoice={invoice.id}", {
+    #         "paid": True,
+    #     })
+    #     self.assertEqual(response.status_code, 200)
+    #     self.assertEqual(response.data["data"]["paid"], True)
+
 
 class TestReservationApi(APITestCase):
 
@@ -293,12 +369,12 @@ class TestReservationApi(APITestCase):
         self.token = response.data.pop("jwt")
         self.assertTrue(self.token)
 
+        self.client.credentials(HTTP_AUTHORIZATION=f"Bearer {self.token}")
+
     def test_reservation_create(self):
         """
         Tests that a reservation can be created.
         """
-
-        self.client.credentials(HTTP_AUTHORIZATION=f"Bearer {self.token}")
 
         response = self.client.post("/api/reservation/create", {
             "cabin": self.cabin.id,
@@ -326,11 +402,26 @@ class TestReservationApi(APITestCase):
         self.assertEqual(str(self.reservation.get_total_price()), format(210, '.2f'))
         self.assertEqual(self.reservation.length_of_stay, 2)
 
+    def test_create_without_jwt(self):
+        # Log out
+        response = self.client.post("/api/user/logout")
+        self.assertEqual(response.status_code, 200)
+
+        response = self.client.post("/api/reservation/create", {
+            "cabin": self.cabin.id,
+            "customer": self.customer.id,
+            "owner": self.owner.id,
+            "start_date": datetime.date.today(),
+            "end_date": datetime.date.today() + datetime.timedelta(days=2),
+            "services": [self.service.id]
+        })
+
+        self.assertEqual(response.status_code, 401)
+
     def test_reservation_get(self):
         """
         Tests that a reservation can be retrieved.
         """
-        self.client.credentials(HTTP_AUTHORIZATION=f"Bearer {self.token}")
         self.reservation = Reservation.objects.create(
             cabin=self.cabin,
             customer=self.customer,
@@ -349,7 +440,6 @@ class TestReservationApi(APITestCase):
         """
         Tests that a reservation can be searched.
         """
-        self.client.credentials(HTTP_AUTHORIZATION=f"Bearer {self.token}")
         self.reservation = Reservation.objects.create(
             cabin=self.cabin,
             customer=self.customer,
@@ -365,6 +455,7 @@ class TestReservationApi(APITestCase):
         """
         Tests that a reservation can be updated.
         """
+
         self.reservation = Reservation.objects.create(
             cabin=self.cabin,
             customer=self.customer,
@@ -372,7 +463,6 @@ class TestReservationApi(APITestCase):
             start_date=datetime.date.today(),
             end_date=datetime.date.today() + datetime.timedelta(days=2),
         )
-        self.client.credentials(HTTP_AUTHORIZATION=f"Bearer {self.token}")
 
         response = self.client.patch(f"/api/reservation/update?reservation={self.reservation.id}", json.dumps({
             "start_date": str(datetime.date.today() + datetime.timedelta(days=1)),
@@ -414,8 +504,6 @@ class TestReservationApi(APITestCase):
             start_date=datetime.date.today(),
             end_date=datetime.date.today() + datetime.timedelta(days=2),
         )
-
-        self.client.credentials(HTTP_AUTHORIZATION=f"Bearer {self.token}")
 
         response = self.client.delete(f"/api/reservation/delete?reservation={self.reservation.id}")
         self.assertEqual(response.status_code, 200)

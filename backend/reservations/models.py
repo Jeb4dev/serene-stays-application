@@ -70,6 +70,7 @@ class Invoice(models.Model):
     created_at = models.DateTimeField(auto_now_add=True)  # When the invoice was created
     paid_at = models.DateTimeField(null=True)  # When the invoice was paid
     canceled_at = models.DateTimeField(null=True)  # When the invoice was canceled
+    updated_at = models.DateTimeField(auto_now=True)  # When the invoice was last updated
 
     def __str__(self):
         return f"{self.reservation}"
