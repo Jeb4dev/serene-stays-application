@@ -10,6 +10,14 @@ from .models import User
 from .serializers import UserSerializer
 
 
+def get_token(request):
+    auth_header = request.headers.get("Authorization")
+    if auth_header:
+        auth_parts = auth_header.split(" ")
+        if len(auth_parts) > 1:
+            return auth_parts[1]
+    return None
+
 @api_view(["POST"])
 def register(request):
     """
@@ -110,6 +118,8 @@ def logout(request):
     try:
         response = Response()
         response.delete_cookie("jwt")
+        token = get_token(request)
+        Token.objects.filter(token=token).delete()
         response.data = {"result": "success", "message": "Successfully logged out!"}
         response.status = status.HTTP_200_OK
         return response
@@ -130,7 +140,7 @@ def get_data(request):
 
     # Try to get all users
     try:
-        token = request.COOKIES.get("jwt")
+        token = get_token(request)
 
         if not token:
             raise AuthenticationFailed("Unauthenticated!")
@@ -165,7 +175,7 @@ def update_data(request):
 
     # Try to get all users
     try:
-        token = request.COOKIES.get("jwt")
+        token = get_token(request)
 
         if not token:
             raise AuthenticationFailed("Unauthenticated!")

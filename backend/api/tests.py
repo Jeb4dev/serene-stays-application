@@ -475,7 +475,6 @@ class TestReservationApi(APITestCase):
             "start_date": str(datetime.date.today() + datetime.timedelta(days=1)),
             "end_date": str(datetime.date.today() + datetime.timedelta(days=3)),
         }), content_type='application/json')
-
         self.assertEqual(response.status_code, 200)
         self.assertEqual(response.data["data"]["start_date"], str(datetime.date.today() + datetime.timedelta(days=1)))
         self.assertEqual(response.data["data"]["end_date"], str(datetime.date.today() + datetime.timedelta(days=3)))

@@ -238,7 +238,6 @@ class TestUser(APITestCase):
         }
         token = jwt.encode(payload, JWT_SECRET, algorithm="HS256")
         self.client.credentials(HTTP_AUTHORIZATION=token)
-        self.client.cookies["jwt"] = token
 
         response = self.client.get("/api/user/")
         self.assertEqual(response.status_code, status.HTTP_200_OK)

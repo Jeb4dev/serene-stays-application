@@ -15,6 +15,14 @@ from users.models import User
 RESERVATIONS API ENDPOINTS
 """
 
+def get_token(request):
+    auth_header = request.headers.get("Authorization")
+    if auth_header:
+        auth_parts = auth_header.split(" ")
+        if len(auth_parts) > 1:
+            return auth_parts[1]
+    return None
+
 
 def auth(token):
     if not token:
@@ -36,7 +44,8 @@ def create_reservation(request):
     Creates a new reservation.
     """
     try:
-        user = auth(request.COOKIES.get("jwt"))
+        token = get_token(request)
+        user = auth(token)
         serializer = ReservationSerializer(data=request.data)
         serializer.is_valid(raise_exception=True)
         serializer.create(serializer.validated_data)
@@ -56,7 +65,8 @@ def get_reservations(request):
     Returns all reservations.
     """
     try:
-        user = auth(request.COOKIES.get("jwt"))
+        token = get_token(request)
+        user = auth(token)
         reservation_id = request.GET.get("reservation")
         reservations = Reservation.objects.all()
         if not user.is_staff:
@@ -83,7 +93,8 @@ def update_reservation(request):
     Updates a reservation.
     """
     try:
-        user = auth(request.COOKIES.get("jwt"))
+        token = get_token(request)
+        user = auth(token)
 
         reservation_id = request.GET.get("reservation")
         reservation = get_object_or_404(Reservation, pk=reservation_id)
@@ -113,7 +124,8 @@ def delete_reservation(request):
     Deletes a reservation.
     """
     try:
-        user = auth(request.COOKIES.get("jwt"))
+        token = get_token(request)
+        user = auth(token)
         reservation_id = request.GET.get("reservation")
         if not reservation_id:
             raise ValidationError("Reservation ID is required")
@@ -146,7 +158,8 @@ def create_invoice(request):
     Creates a new invoice.
     """
     try:
-        user = auth(request.COOKIES.get("jwt"))
+        token = get_token(request)
+        user = auth(token)
 
         # Only staff can manually create invoices
         if not user.is_staff:
@@ -174,7 +187,9 @@ def get_invoices(request):
     Returns all invoices or a specific invoice. Only staff can view all invoices. Users can view their own invoices.
     """
     try:
-        user = auth(request.COOKIES.get("jwt"))
+        token = get_token(request)
+        user = auth(token)
+
         reservation_id = request.GET.get("invoice")
         invoices = Invoice.objects.all()
         if not user.is_staff:
@@ -201,7 +216,9 @@ def update_invoice(request):
     Updates an invoice. Users can only update their own invoices while staff can update all invoices.
     """
     try:
-        user = auth(request.COOKIES.get("jwt"))
+        token = get_token(request)
+        user = auth(token)
+
         reservation_id = request.GET.get("invoice")
 
         invoice = get_object_or_404(Invoice, pk=reservation_id)
@@ -232,7 +249,9 @@ def delete_invoice(request):
     Deletes an invoice. Only staff can delete invoices.
     """
     try:
-        user = auth(request.COOKIES.get("jwt"))
+        token = get_token(request)
+        user = auth(token)
+
         reservation_id = request.GET.get("invoice")
 
         invoice = get_object_or_404(Invoice, pk=reservation_id)
