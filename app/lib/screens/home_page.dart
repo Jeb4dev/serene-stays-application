@@ -1,12 +1,13 @@
 import 'package:flutter/material.dart';
 
-import 'alueet_page.dart';
-import 'koti_page.dart';
-import 'lasku_page.dart';
-import 'mokit_page.dart';
-import 'palvelut_page.dart';
-import 'raportit_page.dart';
-import 'varaus_page.dart';
+import '../views/alueet_page.dart';
+import '../views/koti_page.dart';
+import '../views/lasku_page.dart';
+import '../views/mokit_page.dart';
+import '../views/palvelut_page.dart';
+import '../views/raportit_page.dart';
+import '../views/varaus_page.dart';
+import '../views/users_page.dart';
 
 class HomePage extends StatefulWidget {
   @override
@@ -40,6 +41,9 @@ class _HomePageState extends State<HomePage> {
         break;
       case 6:
         page = RaportitPage();
+        break;
+      case 7:
+        page = UsersPage();
         break;
       default:
         throw UnimplementedError('no widget for $selectedIndex');
@@ -77,12 +81,16 @@ class _HomePageState extends State<HomePage> {
                     label: Text('Varaukset'),
                   ),
                   NavigationRailDestination(
-                    icon: Icon(Icons.mail_outlined),
+                    icon: Icon(Icons.receipt_long_outlined),
                     label: Text('Laskut'),
                   ),
                   NavigationRailDestination(
                     icon: Icon(Icons.analytics_outlined),
                     label: Text('Raportit'),
+                  ),
+                  NavigationRailDestination(
+                    icon: Icon(Icons.person_2_outlined),
+                    label: Text('Asiakkaat'),
                   ),
                 ],
                 selectedIndex: selectedIndex,

@@ -5,7 +5,7 @@ import 'package:flutter/material.dart';
 import 'package:http/http.dart';
 
 import '../utils/auth.dart';
-import 'login_page.dart';
+import '../screens/login_page.dart';
 
 class User {
   final String username;
