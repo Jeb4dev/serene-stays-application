@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:serene_stays_app/login_page.dart';
+import 'login_page.dart';
 
 class KotiPage extends StatelessWidget {
   const KotiPage({super.key});

@@ -325,19 +325,26 @@ class TestInvoiceApi(APITestCase):
         self.assertEqual(response_data[0]['reservation'], self.reservation.id)
         self.assertEqual(len(response_data), 4)
 
-    # def test_update_invoice(self):
-    #     """
-    #     Tests that an invoice can be updated.
-    #     """
-    #     # Create an invoice directly:
-    #     invoice = Invoice.objects.create(reservation=self.reservation)
-    #
-    #     # Update the invoice:
-    #     response = self.client.patch(f"/api/reservation/invoice?invoice={invoice.id}", {
-    #         "paid": True,
-    #     })
-    #     self.assertEqual(response.status_code, 200)
-    #     self.assertEqual(response.data["data"]["paid"], True)
+    def test_update_invoice(self):
+        """
+        Tests that an invoice can be updated.
+        """
+        # Create an invoice directly:
+        invoice = Invoice.objects.create(reservation=self.reservation)
+
+        # Update the invoice:
+        response = self.client.patch(f"/api/reservation/invoice/update?invoice={invoice.id}", {
+            "paid_at": datetime.datetime.now(),
+        })
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.data["data"]["paid_at"] is not None, True)
+
+    def test_delete_invoice(self):
+        """
+        Tests that an invoice can be deleted.
+        """
+
+
 
 
 class TestReservationApi(APITestCase):

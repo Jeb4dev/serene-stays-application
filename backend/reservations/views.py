@@ -145,13 +145,33 @@ def create_invoice(request):
     """
     Creates a new invoice.
     """
-    return Response({"result": "error", "message": "not implemented"}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+    try:
+        user = auth(request.COOKIES.get("jwt"))
+
+        # Only staff can manually create invoices
+        if not user.is_staff:
+            raise AuthenticationFailed(f"Unauthenticated!")
+
+        serializer = InvoiceSerializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+        serializer.create(serializer.validated_data)
+        serializer.save()
+        return Response({"result": "success", "data": serializer.data}, status=status.HTTP_201_CREATED)
+
+    except AuthenticationFailed as e:
+        return Response({"result": "error", "message": e.detail}, status=status.HTTP_401_UNAUTHORIZED)
+    except Http404:
+        return Response({"result": "error", "message": "No invoices found"}, status=status.HTTP_404_NOT_FOUND)
+    except ValidationError as e:
+        return Response({"result": "error", "message": e.detail}, status=status.HTTP_400_BAD_REQUEST)
+    except Exception as e:
+        return Response({"result": "error", "message": str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
 
 @api_view(["GET"])
 def get_invoices(request):
     """
-    Returns all invoices.
+    Returns all invoices or a specific invoice. Only staff can view all invoices. Users can view their own invoices.
     """
     try:
         user = auth(request.COOKIES.get("jwt"))
@@ -175,17 +195,60 @@ def get_invoices(request):
         return Response({"result": "error", "message": str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
 
-@api_view(["PUT"])
+@api_view(["PATCH"])
 def update_invoice(request):
     """
-    Updates an invoice.
+    Updates an invoice. Users can only update their own invoices while staff can update all invoices.
     """
-    return Response({"result": "error", "message": "not implemented"}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+    try:
+        user = auth(request.COOKIES.get("jwt"))
+        reservation_id = request.GET.get("invoice")
+
+        invoice = get_object_or_404(Invoice, pk=reservation_id)
+
+        if invoice.reservation.customer.id != user.id:
+            if not user.is_staff:
+                raise AuthenticationFailed(f"Unauthenticated!")
+
+        serializer = InvoiceSerializer(invoice, data=request.data, partial=True)
+        serializer.is_valid(raise_exception=True)
+        serializer.save()
+
+        return Response({"result": "success", "data": serializer.data}, status=status.HTTP_200_OK)
+
+    except AuthenticationFailed as e:
+        return Response({"result": "error", "message": e.detail}, status=status.HTTP_401_UNAUTHORIZED)
+    except Http404:
+        return Response({"result": "error", "message": "No invoices found"}, status=status.HTTP_404_NOT_FOUND)
+    except ValidationError as e:
+        return Response({"result": "error", "message": e.detail}, status=status.HTTP_400_BAD_REQUEST)
+    except Exception as e:
+        return Response({"result": "error", "message": str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
 
 @api_view(["DELETE"])
 def delete_invoice(request):
     """
-    Deletes an invoice.
+    Deletes an invoice. Only staff can delete invoices.
     """
-    return Response({"result": "error", "message": "not implemented"}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+    try:
+        user = auth(request.COOKIES.get("jwt"))
+        reservation_id = request.GET.get("invoice")
+
+        invoice = get_object_or_404(Invoice, pk=reservation_id)
+
+        # Users cannot delete an invoices
+        if not user.is_staff:
+            raise AuthenticationFailed(f"Unauthenticated!")
+
+        invoice.delete()
+        return Response({"result": "success", "message": "Invoice deleted"}, status=status.HTTP_200_OK)
+
+    except AuthenticationFailed as e:
+        return Response({"result": "error", "message": e.detail}, status=status.HTTP_401_UNAUTHORIZED)
+    except Http404:
+        return Response({"result": "error", "message": "No invoices found"}, status=status.HTTP_404_NOT_FOUND)
+    except ValidationError as e:
+        return Response({"result": "error", "message": e.detail}, status=status.HTTP_400_BAD_REQUEST)
+    except Exception as e:
+        return Response({"result": "error", "message": str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
