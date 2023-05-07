@@ -4,9 +4,9 @@ import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:http/http.dart';
 
-import '../utils/auth.dart';
-import '../screens/LoginPage.dart';
 import '../data/User.dart';
+import '../screens/LoginPage.dart';
+import '../utils/auth.dart';
 
 class ResponseData {
   final String message;
@@ -29,8 +29,14 @@ class LogoutPage extends StatelessWidget {
       },
     );
     var responseData = json.decode(response.body);
-    User user =
-    User(responseData['data']['username'], responseData['data']['email']);
+    User user = User(
+        responseData['data']['username'],
+        responseData['data']['email'],
+        responseData['data']['first_name'],
+        responseData['data']['last_name'],
+        responseData['data']['address'],
+        responseData['data']['phone'],
+        responseData['data']['zip']);
     return ResponseData(responseData['result'], user);
   }
 

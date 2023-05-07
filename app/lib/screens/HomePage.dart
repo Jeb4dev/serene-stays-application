@@ -19,7 +19,7 @@ class _HomePageState extends State<HomePage> {
     ReservationPage(),
     InvoicesPage(),
     RaportPage(),
-    UsersPage(),
+    CustomersPage(),
     LogoutPage(),
 
     // Add more pages here as needed
