@@ -1,8 +1,9 @@
 import 'package:flutter/material.dart';
-import 'mokit_page.dart';
+
 import 'alueet_page.dart';
 import 'koti_page.dart';
 import 'lasku_page.dart';
+import 'mokit_page.dart';
 import 'palvelut_page.dart';
 import 'raportit_page.dart';
 import 'varaus_page.dart';

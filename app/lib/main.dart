@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
-import 'login_page.dart';
+import 'screens/login_page.dart';
+import 'screens/register_page.dart';
+import 'screens/home_page.dart';
 
 void main() => runApp(MyApp());
 
@@ -8,10 +10,11 @@ class MyApp extends StatelessWidget {
   Widget build(BuildContext context) {
     return MaterialApp(
       title: 'Serene Stays',
+      debugShowCheckedModeBanner: false,
       theme: ThemeData(
-        primarySwatch: Colors.blue,
+        primarySwatch: Colors.purple,
       ),
-      home: const LoginPage(),
+      home: HomePage(),
     );
   }
 }
