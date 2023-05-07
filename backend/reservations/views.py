@@ -15,6 +15,7 @@ from users.models import User
 RESERVATIONS API ENDPOINTS
 """
 
+
 def get_token(request):
     auth_header = request.headers.get("Authorization")
     if auth_header:
@@ -46,6 +47,8 @@ def create_reservation(request):
     try:
         token = get_token(request)
         user = auth(token)
+        if not user:
+            raise AuthenticationFailed("Unauthenticated: no token provided!")
         serializer = ReservationSerializer(data=request.data)
         serializer.is_valid(raise_exception=True)
         serializer.create(serializer.validated_data)

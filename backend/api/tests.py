@@ -345,8 +345,6 @@ class TestInvoiceApi(APITestCase):
         """
 
 
-
-
 class TestReservationApi(APITestCase):
 
     def setUp(self):
@@ -421,7 +419,9 @@ class TestReservationApi(APITestCase):
             "start_date": datetime.date.today(),
             "end_date": datetime.date.today() + datetime.timedelta(days=2),
             "services": [self.service.id]
-        })
+        },
+            headers={"Authorization": ""}
+        )
 
         self.assertEqual(response.status_code, 401)
 

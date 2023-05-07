@@ -119,7 +119,7 @@ def logout(request):
         response = Response()
         response.delete_cookie("jwt")
         token = get_token(request)
-        Token.objects.filter(token=token).delete()
+        response.headers["Authorization"] = ""
         response.data = {"result": "success", "message": "Successfully logged out!"}
         response.status = status.HTTP_200_OK
         return response
