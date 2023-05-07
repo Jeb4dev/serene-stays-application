@@ -18,6 +18,7 @@ def get_token(request):
             return auth_parts[1]
     return None
 
+
 @api_view(["POST"])
 def register(request):
     """
@@ -151,8 +152,14 @@ def get_data(request):
             raise AuthenticationFailed("Unauthenticated!")
 
         user = User.objects.filter(id=payload["id"]).first()
-        serializer = UserSerializer(user)
 
+        if user.is_staff:
+            users = User.objects.all()
+
+            serializer = UserSerializer(users, many=True)
+            return Response({"result": "success", "data": serializer.data}, status=status.HTTP_200_OK)
+
+        serializer = UserSerializer(user)
         return Response({"result": "success", "data": serializer.data}, status=status.HTTP_200_OK)
 
     # Catch authentication errors and return a 401 response
