@@ -1,3 +1,6 @@
 from django.contrib import admin
+from .models import Cabin, Area, PostCode
 
-# Register your models here.
+admin.site.register(Cabin)
+admin.site.register(Area)
+admin.site.register(PostCode)
