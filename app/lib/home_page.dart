@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:serene_stays_app/mokit_page.dart';
+import 'mokit_page.dart';
 import 'alueet_page.dart';
 import 'koti_page.dart';
 import 'lasku_page.dart';
