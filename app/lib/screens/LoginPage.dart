@@ -2,41 +2,37 @@ import 'dart:convert';
 
 import 'package:flutter/material.dart';
 import 'package:http/http.dart';
-import 'package:serene_stays_app/screens/home_page.dart';
+import 'package:serene_stays_app/screens/RegisterPage.dart';
 
 import '../utils/auth.dart';
-import 'login_page.dart';
+import 'HomePage.dart';
 
-class RegisterPage extends StatefulWidget {
-  const RegisterPage({super.key});
+class LoginPage extends StatefulWidget {
+  const LoginPage({super.key});
 
   @override
-  State<StatefulWidget> createState() => _RegisterPageState();
+  State<StatefulWidget> createState() => _LoginPageState();
 }
 
-class _RegisterPageState extends State<RegisterPage> {
-  TextEditingController usernameController = TextEditingController();
+class _LoginPageState extends State<LoginPage> {
   TextEditingController emailController = TextEditingController();
   TextEditingController passwordController = TextEditingController();
   String errorText = "";
 
-  void login(String email, username, password) async {
+  void login(String email, password) async {
     setState(() {
       errorText = '';
     });
     try {
       Response response = await post(
-          Uri.parse('http://127.0.0.1:8000/api/user/register'),
-          body: {'email': email, 'password': password, 'username': username});
+          Uri.parse('http://127.0.0.1:8000/api/user/login'),
+          body: {'email': email, 'password': password});
 
-      if (response.statusCode == 201) {
-        Response response = await post(
-            Uri.parse('http://127.0.0.1:8000/api/user/login'),
-            body: {'email': email, 'password': password}
-        );
+      if (response.statusCode == 200) {
         var data = jsonDecode(response.body.toString());
         var token = data['jwt'];
         await storage.write(key: 'jwt', value: token);
+        print('Login successfully');
       } else {
         var data = jsonDecode(response.body.toString());
         setState(() {
@@ -47,6 +43,7 @@ class _RegisterPageState extends State<RegisterPage> {
       setState(() {
         errorText = 'Login failed, please try again later';
       });
+      print(e);
     }
 
     if (errorText == '') {
@@ -80,16 +77,6 @@ class _RegisterPageState extends State<RegisterPage> {
                 height: 10,
               ),
               TextFormField(
-                controller: usernameController,
-                keyboardType: TextInputType.text,
-                decoration: const InputDecoration(
-                  hintText: 'Käyttäjänimi',
-                ),
-              ),
-              const SizedBox(
-                height: 10,
-              ),
-              TextFormField(
                 controller: passwordController,
                 obscureText: true,
                 keyboardType: TextInputType.emailAddress,
@@ -107,27 +94,25 @@ class _RegisterPageState extends State<RegisterPage> {
               ),
               ElevatedButton(
                 onPressed: () {
-                  login(
-                      emailController.text.toString(),
-                      usernameController.text.toString(),
+                  login(emailController.text.toString(),
                       passwordController.text.toString());
                 },
-                child: const Text('Rekisteröidy'),
+                child: const Text('Kirjaudu'),
               ),
               const SizedBox(
                 height: 25,
               ),
               const Text(
-                "Onko sinulla jo tili?",
+                "Eikö sinulla ole tiliä?",
               ),
               TextButton(
                 onPressed: () {
                   Navigator.push(
                     context,
-                    MaterialPageRoute(builder: (context) => const LoginPage()),
+                    MaterialPageRoute(builder: (context) => const RegisterPage()),
                   );
                 },
-                child: const Text('Kirjaudu sisään'),
+                child: const Text('Rekisteröidy'),
               ),
             ],
           ),

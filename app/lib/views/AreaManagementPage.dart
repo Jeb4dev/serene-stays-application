@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 
-import 'Data/Data.dart';
+import '../data/Data.dart';
 import 'AreaItemsPage.dart';
 import 'AreaServicesPage.dart';
 

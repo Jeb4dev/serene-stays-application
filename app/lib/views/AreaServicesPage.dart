@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'Data/Data.dart';
+import '../data/Data.dart';
 
 class AreaServicesPage extends StatefulWidget {
   final Area area;

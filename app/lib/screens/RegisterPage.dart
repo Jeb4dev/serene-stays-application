@@ -2,37 +2,41 @@ import 'dart:convert';
 
 import 'package:flutter/material.dart';
 import 'package:http/http.dart';
-import 'package:serene_stays_app/screens/register_page.dart';
+import 'package:serene_stays_app/screens/HomePage.dart';
 
 import '../utils/auth.dart';
-import 'home_page.dart';
+import 'LoginPage.dart';
 
-class LoginPage extends StatefulWidget {
-  const LoginPage({super.key});
+class RegisterPage extends StatefulWidget {
+  const RegisterPage({super.key});
 
   @override
-  State<StatefulWidget> createState() => _LoginPageState();
+  State<StatefulWidget> createState() => _RegisterPageState();
 }
 
-class _LoginPageState extends State<LoginPage> {
+class _RegisterPageState extends State<RegisterPage> {
+  TextEditingController usernameController = TextEditingController();
   TextEditingController emailController = TextEditingController();
   TextEditingController passwordController = TextEditingController();
   String errorText = "";
 
-  void login(String email, password) async {
+  void login(String email, username, password) async {
     setState(() {
       errorText = '';
     });
     try {
       Response response = await post(
-          Uri.parse('http://127.0.0.1:8000/api/user/login'),
-          body: {'email': email, 'password': password});
+          Uri.parse('http://127.0.0.1:8000/api/user/register'),
+          body: {'email': email, 'password': password, 'username': username});
 
-      if (response.statusCode == 200) {
+      if (response.statusCode == 201) {
+        Response response = await post(
+            Uri.parse('http://127.0.0.1:8000/api/user/login'),
+            body: {'email': email, 'password': password}
+        );
         var data = jsonDecode(response.body.toString());
         var token = data['jwt'];
         await storage.write(key: 'jwt', value: token);
-        print('Login successfully');
       } else {
         var data = jsonDecode(response.body.toString());
         setState(() {
@@ -43,7 +47,6 @@ class _LoginPageState extends State<LoginPage> {
       setState(() {
         errorText = 'Login failed, please try again later';
       });
-      print(e);
     }
 
     if (errorText == '') {
@@ -58,6 +61,7 @@ class _LoginPageState extends State<LoginPage> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
+
         title: const Text('Serene Stays'),
         automaticallyImplyLeading: false,
       ),
@@ -71,6 +75,16 @@ class _LoginPageState extends State<LoginPage> {
                 keyboardType: TextInputType.emailAddress,
                 decoration: const InputDecoration(
                   hintText: 'Sähköposti',
+                ),
+              ),
+              const SizedBox(
+                height: 10,
+              ),
+              TextFormField(
+                controller: usernameController,
+                keyboardType: TextInputType.text,
+                decoration: const InputDecoration(
+                  hintText: 'Käyttäjänimi',
                 ),
               ),
               const SizedBox(
@@ -94,25 +108,27 @@ class _LoginPageState extends State<LoginPage> {
               ),
               ElevatedButton(
                 onPressed: () {
-                  login(emailController.text.toString(),
+                  login(
+                      emailController.text.toString(),
+                      usernameController.text.toString(),
                       passwordController.text.toString());
                 },
-                child: const Text('Kirjaudu'),
+                child: const Text('Rekisteröidy'),
               ),
               const SizedBox(
                 height: 25,
               ),
               const Text(
-                "Eikö sinulla ole tiliä?",
+                "Onko sinulla jo tili?",
               ),
               TextButton(
                 onPressed: () {
                   Navigator.push(
                     context,
-                    MaterialPageRoute(builder: (context) => const RegisterPage()),
+                    MaterialPageRoute(builder: (context) => const LoginPage()),
                   );
                 },
-                child: const Text('Rekisteröidy'),
+                child: const Text('Kirjaudu sisään'),
               ),
             ],
           ),

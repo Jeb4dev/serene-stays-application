@@ -5,14 +5,8 @@ import 'package:flutter/material.dart';
 import 'package:http/http.dart';
 
 import '../utils/auth.dart';
-import '../screens/login_page.dart';
-
-class User {
-  final String username;
-  final String email;
-
-  User(this.username, this.email);
-}
+import '../screens/LoginPage.dart';
+import '../data/User.dart';
 
 class ResponseData {
   final String message;
@@ -21,8 +15,8 @@ class ResponseData {
   ResponseData(this.message, this.user);
 }
 
-class KotiPage extends StatelessWidget {
-  KotiPage({super.key});
+class LogoutPage extends StatelessWidget {
+  LogoutPage({super.key});
 
   Future<ResponseData> getUserData() async {
     var token = await storage.read(key: 'jwt');
@@ -36,7 +30,7 @@ class KotiPage extends StatelessWidget {
     );
     var responseData = json.decode(response.body);
     User user =
-        User(responseData['data']['username'], responseData['data']['email']);
+    User(responseData['data']['username'], responseData['data']['email']);
     return ResponseData(responseData['result'], user);
   }
 
@@ -89,7 +83,7 @@ class KotiPage extends StatelessWidget {
                               MaterialPageRoute(
                                   builder: (context) => const LoginPage()));
                         },
-                        child: const Text('Kirjaudu Ulos'),
+                        child: const Text('Kirjaudu sisään'),
                       ),
                     ],
                   ),
