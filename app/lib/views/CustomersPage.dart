@@ -574,7 +574,7 @@ class _CustomersPageState extends State<CustomersPage> {
                                 children: [
                                   Icon(Icons.account_circle),
                                   const SizedBox(width: 8),
-                                  Text('Username'),
+                                  Text('Käyttäjänimi'),
                                   const SizedBox(width: 16),
                                   Text(u.username),
                                 ],
@@ -588,7 +588,7 @@ class _CustomersPageState extends State<CustomersPage> {
                                     children: [
                                       const Icon(Icons.home),
                                       const SizedBox(width: 8),
-                                      const Text('Address'),
+                                      const Text('Osoite'),
                                       const SizedBox(width: 16),
                                       Text(u.address.toString()),
                                     ],
@@ -616,7 +616,7 @@ class _CustomersPageState extends State<CustomersPage> {
                                         );
                                       }
                                     },
-                                    child: const Text('INVOICES'),
+                                    child: const Text('LASKUT'),
                                   ),
                                 ],
                               ),
@@ -629,7 +629,7 @@ class _CustomersPageState extends State<CustomersPage> {
                                     children: [
                                       const Icon(Icons.phone),
                                       const SizedBox(width: 8),
-                                      const Text('Phone'),
+                                      const Text('Puhelin'),
                                       const SizedBox(width: 16),
                                       Text(u.phone.toString()),
                                     ],
@@ -657,7 +657,7 @@ class _CustomersPageState extends State<CustomersPage> {
                                         );
                                       }
                                     },
-                                    child: const Text('RESERVATIONS'),
+                                    child: const Text('VARAUKSET'),
                                   ),
                                 ],
                               ),
