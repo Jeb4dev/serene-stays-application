@@ -4,6 +4,7 @@ import jwt
 from rest_framework import status
 from rest_framework.test import APIClient, APITestCase
 from conf.settings import JWT_SECRET
+from users.models import User
 
 
 class TestUser(APITestCase):
@@ -293,3 +294,33 @@ class TestUser(APITestCase):
         response = self.client.put("/api/user/update", data)
         self.assertEqual(response.status_code, status.HTTP_401_UNAUTHORIZED)
         self.assertEqual(response.data, {"result": "error", "message": "Unauthenticated!"})
+
+    # -------------
+    # User delete
+    # -------------
+
+    def test_user_delete(self):
+        """
+        Test user delete.
+        """
+        token = self.login_user()
+
+        # Change user to admin
+        user = User.objects.get(username=self._data["username"])
+        user.is_staff = True
+        user.save()
+
+        self.client.credentials(HTTP_AUTHORIZATION=f"Bearer {token}")
+        response = self.client.delete(f"/api/user/delete?user={user.username}")
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertEqual(response.data, {"result": "success", "message": "User successfully deleted!"})
+
+    def test_user_delete_without_admin(self):
+        """
+        Test user delete.
+        """
+        token = self.login_user()
+        self.client.credentials(HTTP_AUTHORIZATION=f"Bearer {token}")
+        response = self.client.delete(f"/api/user/delete?user={self._data['username']}")
+        self.assertEqual(response.status_code, status.HTTP_401_UNAUTHORIZED)
+

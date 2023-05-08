@@ -42,6 +42,10 @@ class _CustomersPageState extends State<CustomersPage> {
     );
     var responseData = json.decode(response.body);
 
+    if (responseData['result'] == 'error') {
+      return ResponseData(responseData['message'], []);
+    }
+
     for (var u in responseData['data']) {
       User user = User(u['username'], u['email'], u['first_name'],
           u['last_name'], u['address'], u['phone'], u['zip']);
@@ -83,7 +87,9 @@ class _CustomersPageState extends State<CustomersPage> {
             data['data']['address'],
             data['data']['phone'],
             data['data']['zip']);
-        users.add(user);
+        setState(() {
+          users.add(user);
+        });
         return ResponseData(data['result'].toString(), [user]);
       }
       return ResponseData(data['message'].toString(),
@@ -95,11 +101,68 @@ class _CustomersPageState extends State<CustomersPage> {
   }
 
   Future<ResponseData> deleteUser(String username) async {
-    return ResponseData("Not implemented", null);
+    var token = await storage.read(key: 'jwt');
+    var response = await delete(
+      Uri.parse('http://127.0.0.1:8000/api/user/delete?user=$username'),
+      headers: {
+        "Content-Type": "application/json",
+        "Accept": "application/json",
+        HttpHeaders.authorizationHeader: 'Bearer $token',
+      },
+    );
+    var data = json.decode(response.body);
+    if (data['result'] == 'success') {
+      setState(() {
+        users.removeWhere((element) => element.username == username);
+      });
+    }
+
+    return ResponseData(data['data'].toString(), null);
   }
 
-  Future<ResponseData> editUser(String username) async {
-    return ResponseData("Not implemented", null);
+  Future<ResponseData> editUser(String username, first_name, last_name, email,
+      address, phone, zip) async {
+    try {
+      var token = await storage.read(key: 'jwt');
+      var response = await put(
+        Uri.parse('http://127.0.0.1:8000/api/user/update'),
+        body: jsonEncode({
+          'username': username,
+          'first_name': first_name,
+          'last_name': last_name,
+          'email': email,
+          'address': address,
+          'phone': phone,
+          'zip': zip,
+        }),
+        headers: {
+          "Content-Type": "application/json",
+          "Accept": "application/json",
+          HttpHeaders.authorizationHeader: 'Bearer $token',
+        },
+      );
+      var data = json.decode(response.body);
+      if (data['status'] == 'success') {
+        User user = User(
+            data['data']['username'],
+            data['data']['email'],
+            data['data']['first_name'],
+            data['data']['last_name'],
+            data['data']['address'],
+            data['data']['phone'],
+            data['data']['zip']);
+        setState(() {
+          users.removeWhere((element) => element.username == username);
+          users.add(user);
+        });
+        return ResponseData(data['result'].toString(), [user]);
+      }
+      return ResponseData(data['message'].toString(),
+          [User("null", "null", null, null, null, null, null)]);
+    } catch (e) {
+      return ResponseData(
+          e.toString(), [User("null", "null", null, null, null, null, null)]);
+    }
   }
 
   Future<ResponseData> getInvoices(String username) async {
@@ -108,6 +171,54 @@ class _CustomersPageState extends State<CustomersPage> {
 
   Future<ResponseData> getReservations(String username) async {
     return ResponseData("Not implemented", null);
+  }
+
+  void _showDeleteDialog(String username) {
+    showDialog(
+      context: context,
+      builder: (BuildContext context) {
+        return AlertDialog(
+          title: const Text('Poista asiakas'),
+          content: RichText(
+            text: TextSpan(
+              style: const TextStyle(
+                fontSize: 14.0,
+                color: Colors.black,
+              ),
+              children: <TextSpan>[
+                const TextSpan(text: 'Haluteko varmasti poistaa asiakkaan '),
+                TextSpan(
+                    text: username,
+                    style: const TextStyle(fontWeight: FontWeight.bold)
+                ),
+                const TextSpan(text: ' ?\nAsiakkaan tiedot katoavat pysyvästi.'),
+
+              ],
+            ),
+          ),
+          actions: <Widget>[
+            TextButton(
+              child: const Text('PERUUTA'),
+              onPressed: () {
+                Navigator.pop(context);
+              },
+            ),
+            TextButton(
+              child: const Text('POISTA'),
+              onPressed: () async {
+                var response = await deleteUser(username);
+                ScaffoldMessenger.of(context).showSnackBar(
+                  SnackBar(
+                    content: Text(response.message),
+                  ),
+                );
+                Navigator.pop(context);
+              },
+            ),
+          ],
+        );
+      },
+    );
   }
 
   void _showAddUserDialog() {
@@ -227,6 +338,132 @@ class _CustomersPageState extends State<CustomersPage> {
     );
   }
 
+  void _showUpdateUserDialog(String username, firstName,
+      lastName, email, address, phone, zip) {
+    _usernameController.text = username;
+    _emailController.text = email;
+    _firstNameController.text = firstName ?? "";
+    _lastNameController.text = lastName ?? "";
+    _addressController.text = address ?? "";
+    _phoneController.text = phone ?? "";
+    _zipController.text = zip ?? "";
+    showDialog(
+      context: context,
+      builder: (BuildContext context) {
+        return AlertDialog(
+          title: const Text('Päivitä asiakkaan tietoja'),
+          content: SingleChildScrollView(
+            child: ListBody(
+              children: <Widget>[
+                TextField(
+                  controller: _usernameController,
+                  decoration: const InputDecoration(
+                    border: OutlineInputBorder(),
+                    labelText: 'Käyttäjätunnus',
+                  ),
+                ),
+                const SizedBox(height: 10),
+                TextField(
+                  controller: _emailController,
+                  decoration: const InputDecoration(
+                    border: OutlineInputBorder(),
+                    labelText: 'Sähköposti',
+                  ),
+                ),
+                const SizedBox(height: 10),
+                TextField(
+                  controller: _firstNameController,
+                  decoration: const InputDecoration(
+                    border: OutlineInputBorder(),
+                    labelText: 'Etunimi',
+                  ),
+                ),
+                const SizedBox(height: 10),
+                TextField(
+                  controller: _lastNameController,
+                  decoration: const InputDecoration(
+                    border: OutlineInputBorder(),
+                    labelText: 'Sukunimi',
+                  ),
+                ),
+                const SizedBox(height: 10),
+                TextField(
+                  controller: _addressController,
+                  decoration: const InputDecoration(
+                    border: OutlineInputBorder(),
+                    labelText: 'Osoite',
+                  ),
+                ),
+                const SizedBox(height: 10),
+                TextField(
+                  controller: _phoneController,
+                  decoration: const InputDecoration(
+                    border: OutlineInputBorder(),
+                    labelText: 'Puhelinnumero',
+                  ),
+                ),
+                const SizedBox(height: 10),
+                TextField(
+                  controller: _zipController,
+                  decoration: const InputDecoration(
+                    border: OutlineInputBorder(),
+                    labelText: 'Postinumero',
+                  ),
+                ),
+              ],
+            ),
+          ),
+          actions: <Widget>[
+            TextButton(
+              child: const Text('PERUUTA'),
+              onPressed: () {
+                // clear all fields
+                _usernameController.clear();
+                _emailController.clear();
+                _firstNameController.clear();
+                _lastNameController.clear();
+                _addressController.clear();
+                _phoneController.clear();
+                _zipController.clear();
+
+                Navigator.of(context).pop();
+              },
+            ),
+            TextButton(
+              child: const Text('PÄIVITÄ'),
+              onPressed: () async {
+                var response = await editUser(
+                    _usernameController.text,
+                    _firstNameController.text,
+                    _lastNameController.text,
+                    _emailController.text,
+                    _addressController.text,
+                    _phoneController.text,
+                    _zipController.text
+                );
+                if (response.message == "null") {
+                  Navigator.of(context).pop();
+                  ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
+                    content: Text("Käyttäjä tiedot päivitetty onnistuneesti!"),
+                    duration: Duration(seconds: 4),
+                    backgroundColor: Colors.green,
+                  ));
+                } else {
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    SnackBar(
+                      content: Text(response.message),
+                      duration: Duration(seconds: 4),
+                    ),
+                  );
+                }
+              },
+            ),
+          ],
+        );
+      },
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -277,50 +514,16 @@ class _CustomersPageState extends State<CustomersPage> {
                                   Row(
                                     children: [
                                       IconButton(
-                                        onPressed: () async {
+                                        onPressed: () {
                                           // Handle edit button press
-                                          var response = await editUser(u.username);
-                                          if (response.message == "null") {
-                                            ScaffoldMessenger.of(context)
-                                                .showSnackBar(const SnackBar(
-                                              content: Text(
-                                                  "Käyttäjän tiedot päivitetty onnistuneesti!"),
-                                              duration: Duration(seconds: 4),
-                                              backgroundColor: Colors.green,
-                                            ));
-                                          } else {
-                                            ScaffoldMessenger.of(context)
-                                                .showSnackBar(
-                                              SnackBar(
-                                                content: Text(response.message),
-                                                duration: Duration(seconds: 4),
-                                              ),
-                                            );
-                                          }
+                                          _showUpdateUserDialog(u.username, u.first_name, u.last_name, u.email, u.address, u.phone, u.zip);
                                         },
                                         icon: Icon(Icons.edit),
                                       ),
                                       IconButton(
-                                        onPressed: () async {
+                                        onPressed: () {
                                           // Handle delete button press
-                                          var response = await deleteUser(u.username);
-                                          if (response.message == "null") {
-                                            ScaffoldMessenger.of(context)
-                                                .showSnackBar(const SnackBar(
-                                              content: Text(
-                                                  "Käyttäjä poistettu onnistuneesti!"),
-                                              duration: Duration(seconds: 4),
-                                              backgroundColor: Colors.green,
-                                            ));
-                                          } else {
-                                            ScaffoldMessenger.of(context)
-                                                .showSnackBar(
-                                              SnackBar(
-                                                content: Text(response.message),
-                                                duration: Duration(seconds: 4),
-                                              ),
-                                            );
-                                          }
+                                          _showDeleteDialog(u.username);
                                         },
                                         icon: Icon(Icons.delete),
                                       ),
@@ -347,9 +550,9 @@ class _CustomersPageState extends State<CustomersPage> {
                                 children: [
                                   Row(
                                     children: [
-                                      Icon(Icons.home),
+                                      const Icon(Icons.home),
                                       const SizedBox(width: 8),
-                                      Text('Address'),
+                                      const Text('Address'),
                                       const SizedBox(width: 16),
                                       Text(u.address.toString()),
                                     ],
@@ -357,7 +560,8 @@ class _CustomersPageState extends State<CustomersPage> {
                                   TextButton(
                                     onPressed: () async {
                                       // Handle invoices button press
-                                      var response = await getInvoices(u.username);
+                                      var response =
+                                          await getInvoices(u.username);
                                       if (response.message == "null") {
                                         ScaffoldMessenger.of(context)
                                             .showSnackBar(const SnackBar(
@@ -387,9 +591,9 @@ class _CustomersPageState extends State<CustomersPage> {
                                 children: [
                                   Row(
                                     children: [
-                                      Icon(Icons.phone),
+                                      const Icon(Icons.phone),
                                       const SizedBox(width: 8),
-                                      Text('Phone'),
+                                      const Text('Phone'),
                                       const SizedBox(width: 16),
                                       Text(u.phone.toString()),
                                     ],
@@ -397,7 +601,8 @@ class _CustomersPageState extends State<CustomersPage> {
                                   TextButton(
                                     onPressed: () async {
                                       // Handle invoices button press
-                                      var response = await getReservations(u.username);
+                                      var response =
+                                          await getReservations(u.username);
                                       if (response.message == "null") {
                                         ScaffoldMessenger.of(context)
                                             .showSnackBar(const SnackBar(
@@ -427,6 +632,22 @@ class _CustomersPageState extends State<CustomersPage> {
                     ),
                   ],
                 ));
+              }
+              if (data.user!.isEmpty) {
+                userWidgets.add(
+                  Center(
+                    child: Column(children: [
+                      const SizedBox(height: 10),
+                      Text(
+                        "Asiakkaita ei löytynyt!\n error: ${data.message}",
+                        style: const TextStyle(
+                          fontSize: 15,
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
+                    ]),
+                  ),
+                );
               }
               // display data here
               return Scaffold(
@@ -461,19 +682,22 @@ class _CustomersPageState extends State<CustomersPage> {
               );
             } else if (snapshot.hasError) {
               // handle error here
-              ScaffoldMessenger.of(context).showSnackBar(
-                SnackBar(
-                  content: Text(snapshot.error.toString()),
-                  duration: Duration(seconds: 10),
-                ),
-              );
+
+              String error = snapshot.error.toString();
 
               return Scaffold(
                 body: Center(
                   child: Column(
                     mainAxisAlignment: MainAxisAlignment.center,
-                    children: const [
-                      Text("Asiakkaiden haku epäonnistui!"),
+                    children: [
+                      const Text("Asiakkaiden haku epäonnistui!"),
+                      const SizedBox(height: 10),
+                      const Text(
+                          "Tarkista internet-yhteys ja yritä uudelleen!"),
+                      const SizedBox(height: 200),
+                      const Text("Virheilmoitus kehittäjälle:"),
+                      const SizedBox(height: 10),
+                      Text(error),
                     ],
                   ),
                 ),

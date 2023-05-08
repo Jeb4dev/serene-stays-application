@@ -1,8 +1,10 @@
 import datetime
 import jwt
+from django.http import Http404
 from rest_framework import status
 from rest_framework.decorators import api_view
 from rest_framework.exceptions import AuthenticationFailed, ValidationError
+from rest_framework.generics import get_object_or_404
 from rest_framework.response import Response
 
 from conf.settings import JWT_SECRET
@@ -203,7 +205,52 @@ def update_data(request):
     # Catch authentication errors and return a 401 response
     except AuthenticationFailed as e:
         return Response({"result": "error", "message": str(e)}, status=status.HTTP_401_UNAUTHORIZED)
+    except ValidationError as e:
+        return Response({"result": "error", "message": e.detail}, status=status.HTTP_400_BAD_REQUEST)
+    except Exception as e:
+        return Response({"result": "error", "message": str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
+
+@api_view(["DELETE"])
+def delete_data(request):
+    """
+    API endpoint that deletes a user and returns the deleted user in JSON format.
+
+    :param request: DELETE request
+    :return: JSON response with deleted user or error message
+    """
+
+    # Try to get all users
+    try:
+        token = get_token(request)
+
+        if not token:
+            raise AuthenticationFailed("Unauthenticated!")
+
+        try:
+            payload = jwt.decode(token, JWT_SECRET, algorithms=["HS256"])
+        except jwt.ExpiredSignatureError:
+            raise AuthenticationFailed("Unauthenticated!")
+
+        user = User.objects.filter(id=payload["id"]).first()
+
+        user_username = request.GET.get("user")
+
+        if user_username is None:
+            return Response({"result": "error", "data": "Please provide a username!"}, status=status.HTTP_400_BAD_REQUEST)
+
+        if user.is_staff:
+            user_to_delete = get_object_or_404(User, username=user_username)
+            user_to_delete.delete()
+            return Response({"result": "success", "data": "User deleted successfully!"}, status=status.HTTP_200_OK)
+
+        return Response({"result": "error", "data": "Only admin can delete users!"}, status=status.HTTP_401_UNAUTHORIZED)
+
+    # Catch authentication errors and return a 401 response
+    except AuthenticationFailed as e:
+        return Response({"result": "error", "message": str(e)}, status=status.HTTP_401_UNAUTHORIZED)
+    except Http404:
+        return Response({"result": "error", "message": "No user found"}, status=status.HTTP_404_NOT_FOUND)
     # Catch unexpected errors and return a 500 response
     except Exception as e:
         return Response({"result": "error", "message": str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)

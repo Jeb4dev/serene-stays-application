@@ -343,6 +343,7 @@ class TestInvoiceApi(APITestCase):
         """
         Tests that an invoice can be deleted.
         """
+        pass
 
 
 class TestReservationApi(APITestCase):
