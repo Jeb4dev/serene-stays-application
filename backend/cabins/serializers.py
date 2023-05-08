@@ -16,8 +16,12 @@ class CabinSerializer(serializers.ModelSerializer):
             "area",
             "zip_code",
             "num_of_beds",
+            "address",
         ]
         read_only_fields = ["id", "created_at", "updated_at"]
+        extra_kwargs = {
+            "address": {"required": False},
+        }
 
     def create(self, validated_data):
         instance = self.Meta.model(**validated_data)

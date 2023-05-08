@@ -17,6 +17,7 @@ class Cabin(models.Model):
     area = models.ForeignKey(Area, on_delete=models.CASCADE)
     zip_code = models.ForeignKey(PostCode, on_delete=models.CASCADE)
     num_of_beds = models.IntegerField()
+    address = models.CharField(max_length=100, null=True)
 
     def __str__(self):
         return self.name
