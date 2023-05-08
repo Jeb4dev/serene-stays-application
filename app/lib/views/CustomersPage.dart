@@ -28,6 +28,7 @@ class _CustomersPageState extends State<CustomersPage> {
   final _addressController = TextEditingController();
   final _phoneController = TextEditingController();
   final _zipController = TextEditingController();
+  final _searchController = TextEditingController();
   List<User> users = [];
 
   Future<ResponseData> getUserData() async {
@@ -46,10 +47,14 @@ class _CustomersPageState extends State<CustomersPage> {
       return ResponseData(responseData['message'], []);
     }
 
+    users.clear();
+
     for (var u in responseData['data']) {
       User user = User(u['username'], u['email'], u['first_name'],
           u['last_name'], u['address'], u['phone'], u['zip']);
-      users.add(user);
+      if (user.username.toLowerCase().contains(_searchController.value.text.toLowerCase())) {
+        users.add(user);
+      }
     }
 
     return ResponseData(responseData['result'], users);
@@ -212,6 +217,7 @@ class _CustomersPageState extends State<CustomersPage> {
                     content: Text(response.message),
                   ),
                 );
+                setState(() {});
                 Navigator.pop(context);
               },
             ),
@@ -322,6 +328,7 @@ class _CustomersPageState extends State<CustomersPage> {
                     duration: Duration(seconds: 4),
                     backgroundColor: Colors.green,
                   ));
+                  setState(() {});
                 } else {
                   ScaffoldMessenger.of(context).showSnackBar(
                     SnackBar(
@@ -441,6 +448,7 @@ class _CustomersPageState extends State<CustomersPage> {
                     _phoneController.text,
                     _zipController.text
                 );
+                setState(() {});
                 if (response.message == "null") {
                   Navigator.of(context).pop();
                   ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
@@ -464,9 +472,37 @@ class _CustomersPageState extends State<CustomersPage> {
     );
   }
 
+  void _searchCustomers(String search) {
+    setState(() {});
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      appBar: AppBar(
+        title: TextField(
+          controller: _searchController,
+          decoration: InputDecoration(
+            hintText: 'Etsi asiakasta käyttäjänimellä...',
+            prefixIcon: const Icon(Icons.search),
+            suffixIcon: IconButton(
+              icon: const Icon(Icons.clear),
+              onPressed: () => {
+                _searchController.clear(),
+                setState(() {})
+              },
+            ),
+            filled: true,
+            fillColor: Colors.grey[200],
+            border: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(30),
+              borderSide: BorderSide.none,
+            ),
+          ),
+          onChanged: _searchCustomers,
+        ),
+      ),
+
       body: FutureBuilder<ResponseData>(
         future: getUserData(),
         builder: (context, snapshot) {
@@ -682,7 +718,6 @@ class _CustomersPageState extends State<CustomersPage> {
               );
             } else if (snapshot.hasError) {
               // handle error here
-
               String error = snapshot.error.toString();
 
               return Scaffold(
