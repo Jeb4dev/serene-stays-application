@@ -194,9 +194,18 @@ def update_data(request):
         except jwt.ExpiredSignatureError:
             raise AuthenticationFailed("Unauthenticated!")
 
-        user = User.objects.filter(id=payload["id"]).first()
+        user_username = request.GET.get("user")
 
-        serializer = UserSerializer(user, data=request.data, partial=True)
+        if user_username is None:
+            raise ValidationError("User id not provided!")
+
+        user = User.objects.filter(id=payload["id"]).first()
+        user_to_update = get_object_or_404(User, username=user_username)
+
+        if user.is_staff is False:
+            raise AuthenticationFailed("Unauthorized!")
+
+        serializer = UserSerializer(user_to_update, data=request.data, partial=True)
         serializer.is_valid(raise_exception=True)
         serializer.save()
 
