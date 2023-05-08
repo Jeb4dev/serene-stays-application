@@ -130,7 +130,7 @@ class _CustomersPageState extends State<CustomersPage> {
     try {
       var token = await storage.read(key: 'jwt');
       var response = await put(
-        Uri.parse('http://127.0.0.1:8000/api/user/update'),
+        Uri.parse('http://127.0.0.1:8000/api/user/update?user=$username'),
         body: jsonEncode({
           'username': username,
           'first_name': first_name,
