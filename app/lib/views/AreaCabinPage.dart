@@ -355,7 +355,7 @@ class _AreaItemsPageState extends State<AreaItemsPage> {
                     child: Column(
                       mainAxisAlignment: MainAxisAlignment.center,
                       children: [
-                        const Text("Mökkejen haku epäonnistui!"),
+                        const Text("Mökkien haku epäonnistui!"),
                         const SizedBox(height: 10),
                         const Text(
                             "Tarkista internet-yhteys ja yritä uudelleen!"),
