@@ -144,11 +144,17 @@ class _AreaManagementPageState extends State<AreaManagementPage> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(
-        title: const Text('Alueiden hallinta'),
-      ),
       body: Column(
         children: [
+          const SizedBox(height: 10),
+          const Text(
+            "Alueet",
+            style: TextStyle(
+              fontSize: 20,
+              fontWeight: FontWeight.bold,
+            ),
+          ),
+          const SizedBox(height: 10),
           Expanded(
             child: ListView.builder(
               itemCount: _areas.length,
