@@ -1,5 +1,17 @@
+import 'dart:convert';
+import 'dart:io';
+
 import 'package:flutter/material.dart';
+import 'package:http/http.dart';
 import '../data/Data.dart';
+import '../utils/auth.dart';
+
+class ResponseData {
+  final String message;
+  final List<Service>? data;
+
+  ResponseData(this.message, this.data);
+}
 
 class AreaServicesPage extends StatefulWidget {
   final Area area;
@@ -12,12 +24,47 @@ class AreaServicesPage extends StatefulWidget {
 
 class _AreaServicesPageState extends State<AreaServicesPage> {
   final GlobalKey<FormState> _formKey = GlobalKey<FormState>();
-  List<Service> _selectedServices = [];
+  List<Service> _services = [];
   Service? _selectedService;
   final TextEditingController _serviceNameController = TextEditingController();
   final TextEditingController _servicePriceController = TextEditingController();
   final TextEditingController _serviceDescriptionController =
       TextEditingController();
+
+  Future<ResponseData> getAreaData() async {
+    try {
+      var token = await storage.read(key: 'jwt');
+      var response = await get(
+        Uri.parse('http://127.0.0.1:8000/api/area/services?area=${widget.area.name}'),
+        headers: {
+          'Content-Type': 'application/json',
+          'Accept': 'application/json',
+          HttpHeaders.authorizationHeader: 'Bearer $token',
+        },
+      );
+      var responseData = json.decode(response.body);
+
+      if (responseData['result'] == 'error') {
+        return ResponseData(responseData['message'], []);
+      }
+
+      _services.clear();
+
+      for (var c in responseData['data']) {
+        Service service = Service(
+          name: c['name'],
+          price: double.parse(c['service_price']),
+          description: c['description'],
+        );
+        _services.add(service);
+      }
+
+      return ResponseData(responseData['result'], _services);
+    }
+    catch (e) {
+      return ResponseData('error', []);
+    }
+  }
 
   void _onServiceTap(Service service) {
     setState(() {
@@ -187,48 +234,120 @@ class _AreaServicesPageState extends State<AreaServicesPage> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(
-        title: Text(widget.area.name),
-      ),
-      body: ListView.builder(
-        itemCount: widget.area.services.length,
-        itemBuilder: (BuildContext context, int index) {
-          final Service service = widget.area.services[index];
+      body: FutureBuilder<ResponseData>(
+        future: getAreaData(),
+        builder: (context, snapshot) {
+          if (snapshot.connectionState == ConnectionState.done) {
+            if (snapshot.hasData) {
+              ResponseData data = snapshot.data!;
+              List<Widget> serviceWidgets = [];
+              for (int i = 0; i < data.data!.length; i++) {
+                serviceWidgets.add(
+                  ListTile(
+                    title: Text(data.data![i].name),
+                    subtitle: Text('Hinta: ${data.data![i].price}'),
+                    onTap: () {
+                      _onServiceTap(data.data![i]);
+                    },
+                    trailing: Visibility(
+                      visible: true,
+                      child: Row(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          IconButton(
+                            onPressed: () {
+                              _onServiceEdit();
+                            },
+                            icon: const Icon(Icons.edit),
+                          ),
+                          IconButton(
+                            onPressed: () {
+                              _onServiceDelete(data.data![i]);
+                            },
+                            icon: const Icon(Icons.delete),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ),
+                );
+              }
+              if (data.data!.isEmpty) {
+                serviceWidgets.add(
+                  Center(
+                    child: Column(children: [
+                      const SizedBox(height: 10),
+                      Text(
+                        "Palveluja ei löytynyt!\n error: ${data.message}",
+                        style: const TextStyle(
+                          fontSize: 15,
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
+                    ]),
+                  ),
+                );
+              }
+              // display data here
+              return Scaffold(
+                appBar: AppBar(
+                  title: Text(widget.area.name),
+                ),
+                body: Padding(
+                  padding: const EdgeInsets.all(8.0),
+                  child: Column(
+                    children: [
+                      const SizedBox(height: 10),
+                      const Text(
+                        "Palvelut",
+                        style: TextStyle(
+                          fontSize: 20,
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
+                      const SizedBox(height: 10),
+                      Expanded(
+                        child: ListView(
+                          children: serviceWidgets,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
 
-          return ListTile(
-            title: Text(service.name),
-            subtitle: Text(
-                'Hinta: ${service.price} - ' 'Kuvaus: ${service.description}'),
-            onTap: () {
-              _onServiceTap(service);
-            },
-            trailing: Visibility(
-              visible: _selectedService == service,
-              child: Row(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  IconButton(
-                    onPressed: () {
-                      _onServiceEdit();
-                    },
-                    icon: const Icon(Icons.edit),
+
+                floatingActionButton: FloatingActionButton(
+                  child: const Icon(Icons.add),
+                  onPressed: () {
+                    _showAddServiceDialog();
+                  },
+                ),
+              );
+            } else if (snapshot.hasError) {
+              // handle error here
+              String error = snapshot.error.toString();
+
+              return Scaffold(
+                body: Center(
+                  child: Column(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      const Text("Palveluiden haku epäonnistui!"),
+                      const SizedBox(height: 10),
+                      const Text(
+                          "Tarkista internet-yhteys ja yritä uudelleen!"),
+                      const SizedBox(height: 200),
+                      const Text("Virheilmoitus kehittäjälle:"),
+                      const SizedBox(height: 10),
+                      Text(error),
+                    ],
                   ),
-                  IconButton(
-                    onPressed: () {
-                      _onServiceDelete(service);
-                    },
-                    icon: const Icon(Icons.delete),
-                  ),
-                ],
-              ),
-            ),
-          );
-        },
-      ),
-      floatingActionButton: FloatingActionButton(
-        child: const Icon(Icons.add),
-        onPressed: () {
-          _showAddServiceDialog();
+                ),
+              );
+            }
+          }
+          // handle other connection states here
+          return CircularProgressIndicator();
         },
       ),
     );
