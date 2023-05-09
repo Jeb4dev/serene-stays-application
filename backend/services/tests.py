@@ -6,7 +6,13 @@ from cabins.models import Cabin, Area, PostCode
 
 
 class ServiceTests(APITestCase):
-    """Test the Service model"""
+    """
+    Test the Service model. Creates a Service object and tests that its
+    attributes match the values we set in the 'setUp' method. The
+    'test_service_creation checks that the 'Service' object was created
+    successfully, and the other methods check that each attribute is set
+    correctly.
+    """
     def setUp(self):
         self.area=Area.objects.create(area="Helsinki")
         #self.post=PostCode.objects.create(p_code='00070', postal_district="Helsinki")
