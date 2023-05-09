@@ -8,8 +8,6 @@ from .serializers import ServiceSerializer
 from services.models import Service
 
 
-
-
 @api_view(["POST"])
 def create_service(request):
     """
@@ -25,7 +23,7 @@ def create_service(request):
         serializer.save()
 
         return Response({"result": "success", "data": serializer.data}, status=status.HTTP_201_CREATED)
-    
+
     # Throw exception if validation errors occur
     except ValidationError as e:
         return Response({"result": "error", "message": e.detail}, status=status.HTTP_400_BAD_REQUEST)
@@ -42,33 +40,29 @@ def get_service(request):
     try:
         area = request.GET.get("area")
         name = request.GET.get("name")
-        description = request.GET.get("description") # how to tie to service name?
+        description = request.GET.get("description")  # how to tie to service name?
         service_price = request.GET.get("service_price")
         vat_price = request.GET.get("vat_price")
 
         # Do we need to fetch all services ?
-        services = Service.objects.all(Service,)
+        services = Service.objects.all()
 
         # Should description be tied to the service name?
         # how do we filter the services? by description first? or the set primary_key that is area?
         if area:
-           service = get_object_or_404(Service, pk=area)
-           serializer = ServiceSerializer(service)
-           return Response({"result": "success", "data": serializer.data}, status=status.HTTP_404_NOT_FOUND)
-       
-       # Filter by other params
+            services = services.filter(area=area)
         if name:
-           services = services.filter(name=name)
+            services = services.filter(name=name)
         if service_price:
-           services = services.filter(service_price=vat_price)
-        
+            services = services.filter(service_price=vat_price)
+
         if not services:
             raise Http404
-        
+
         # Serialize and return data
         serializer = ServiceSerializer(services, many=True)
         return Response({"result": "success", "data": serializer.data}, status=status.HTTP_200_OK)
-    
+
     except Http404:
         return Response({"result": "error", "message": "No services found"}, status=status.HTTP_404_NOT_FOUND)
     except ValidationError as e:
@@ -97,7 +91,6 @@ def update_service(request):
         return Response({"result": "error", "message": str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
 
-
 @api_view(["DELETE"])
 def delete_service(request):
     """
@@ -112,4 +105,3 @@ def delete_service(request):
         return Response({"result": "error", "message": "No service found"}, status=status.HTTP_404_NOT_FOUND)
     except Exception as e:
         return Response({"result": "error", "message": str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
-

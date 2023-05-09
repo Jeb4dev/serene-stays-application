@@ -35,7 +35,7 @@ class _AreaServicesPageState extends State<AreaServicesPage> {
     try {
       var token = await storage.read(key: 'jwt');
       var response = await get(
-        Uri.parse('http://127.0.0.1:8000/api/area/services?area=${widget.area.name}'),
+        Uri.parse('http://127.0.0.1:8000/api/area/services/get?area=${widget.area.name}'),
         headers: {
           'Content-Type': 'application/json',
           'Accept': 'application/json',
@@ -58,7 +58,6 @@ class _AreaServicesPageState extends State<AreaServicesPage> {
         );
         _services.add(service);
       }
-
       return ResponseData(responseData['result'], _services);
     }
     catch (e) {

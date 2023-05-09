@@ -76,7 +76,7 @@ class _ReservationPageState extends State<ReservationPage> {
         onPressed: () {
           // Implement add reservation action here
         },
-        tooltip: 'Add new reservation',
+        tooltip: 'Lisää uusi varaus',
         child: const Icon(Icons.add),
       ),
     );
