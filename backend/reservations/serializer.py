@@ -22,6 +22,11 @@ class ReservationSerializer(serializers.ModelSerializer):
             "canceled_at",
             "accepted_at",
         ]
+        extra_kwargs = {
+            "created_at": {"required": False},
+            "canceled_at": {"required": False},
+            "accepted_at": {"required": False},
+        }
 
         read_only_fields = ["id", "updated_at"]
 
@@ -39,7 +44,6 @@ class ReservationSerializer(serializers.ModelSerializer):
             :param validated_data: reservation data
             :return: updated reservation object
             """
-            print("update")
             if instance.canceled_at:
                 raise serializers.ValidationError("Cannot update a canceled reservation")
             if instance.accepted_at and validated_data.get("accepted_at"):
@@ -61,6 +65,10 @@ class InvoiceSerializer(serializers.ModelSerializer):
     """
     Serializer for the Invoice model.
     """
+    customer = serializers.CharField(source='reservation.customer.username')
+    reservation_id = serializers.CharField(source='reservation.id')
+    reservation_cabin_area = serializers.CharField(source='reservation.cabin.area.area')
+
 
     class Meta:
         model = Invoice
@@ -70,7 +78,20 @@ class InvoiceSerializer(serializers.ModelSerializer):
             "paid_at",
             "created_at",
             "updated_at",
+            "canceled_at",
+            "customer",
+            "reservation_id",
+            "reservation_cabin_area",
         ]
+        extra_kwargs = {
+            "paid_at": {"required": False},
+            "created_at": {"required": False},
+            "updated_at": {"required": False},
+            "canceled_at": {"required": False},
+            "customer": {"required": False},
+            "reservation_id": {"required": False},
+            "reservation_cabin_area": {"required": False},
+        }
 
         read_only_fields = ["id", "updated_at"]
 
