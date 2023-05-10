@@ -17,7 +17,7 @@ class _HomePageState extends State<HomePage> {
   static final List<Widget> _pages = <Widget>[
     AreaManagementPage(),
     ReservationPage(),
-    InvoicesPage(),
+    InvoicePage(),
     RaportPage(),
     CustomersPage(),
     LogoutPage(),
