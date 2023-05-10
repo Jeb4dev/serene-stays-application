@@ -76,6 +76,26 @@ class TestReservation(TestCase):
             new_reservation.clean()
         self.assertDictEqual({'__all__': ['Reservation overlaps with an existing booking.']}, cm.exception.message_dict)
 
+    def test_is_cabin_available(self):
+        # Is the cabin available for the date range that doesn't
+        # overlap with the existing reservation.
+        available = Reservation.is_cabin_available(self.cabin, date.today() + timedelta(days=5),
+                                                    date.today() + timedelta(days=6))
+        self.assertTrue(available)
+
+    # def test_cabin_not_available(self):
+    #     # Test if the cabin isn't available for the specified date range, that overlaps
+    #     # with an existing reservation.
+    #     available = Reservation.is_cabin_available(self.cabin, check_in_date=,
+    #                                                 check_out_date=)
+    #     self.assertFalse(available)
+
+    def test_invalid_date_range(self):
+        # Test that the method returns false when check-in date is after check-out date
+        available = Reservation.is_cabin_available(self.cabin, date.today() + timedelta(days=6),
+                                                   date.today() + timedelta(days=5))
+        self.assertFalse(available)
+
     def test_calculate_length_of_stay(self):
         """
         Tests that the length of stay is calculated correctly.

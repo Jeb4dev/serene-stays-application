@@ -1,4 +1,4 @@
-from datetime import datetime
+from datetime import datetime, date
 from django.db import models
 from django.db.models import Q
 from users.models import User
@@ -73,6 +73,24 @@ class Reservation(models.Model):
         for service in self.services.all():
             services.append((service.name, service.service_price))
         return services
+    
+    def is_cabin_available(cabin, check_in_date, check_out_date):
+        """
+        Checks if given cabin is available for the specified
+        check-in and check-out dates.
+        : param cabin: Cabin object
+        : param check_in_date: Check-in date
+        : param check_out_date: Check-out date
+        :return True if the cabin is available, otherwise False
+        """
+        if check_in_date >= check_out_date:
+            return False
+        overlapping_reservations = Reservation.objects.filter(
+            cabin=cabin,
+            start_date__lt=check_out_date,
+            end_date__gt=check_in_date
+        )
+        return not overlapping_reservations.exists()
 
 
 class Invoice(models.Model):
