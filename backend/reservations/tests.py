@@ -74,8 +74,7 @@ class TestReservation(TestCase):
         )
         with self.assertRaises(ValidationError) as cm:
             new_reservation.clean()
-        self.assertDictEqual({'__all__': ['Reservation overlaps with an existing booking.']}, cm.exception.message_dict
-                             )
+        self.assertDictEqual({'__all__': ['Reservation overlaps with an existing booking.']}, cm.exception.message_dict)
 
     def test_calculate_length_of_stay(self):
         """
