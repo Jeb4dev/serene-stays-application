@@ -1,4 +1,6 @@
 from django.test import TestCase
+from django.core.exceptions import ValidationError
+from datetime import date, timedelta
 
 from services.models import Service
 from .models import Reservation, Invoice
@@ -46,6 +48,34 @@ class TestReservation(TestCase):
         self.assertEqual(self.reservation.start_date, "2021-01-01")
         self.assertEqual(self.reservation.end_date, "2021-01-02")
         self.assertEqual(self.reservation.services.all()[0], self.services[1])
+
+    def test_cannot_book_already_booked(self):
+        # Create a reservation for the cabin
+        start_date = date.today() + timedelta(days=7)
+        end_date = date.today() + timedelta(days=10)
+        reservation = Reservation.objects.create(
+            cabin = self.cabin,
+            customer = self.customer,
+            owner = self.owner,
+            start_date = start_date,
+            end_date = end_date,
+        )
+        # create a new reservation that overlaps with the existing
+        new_start_date = start_date + timedelta(days=1)
+        new_end_date = end_date + timedelta(days=1)
+        #print(f"Existing reservation: {reservation.start_date} - {reservation.end_date}")
+        #print(f"New reservation: {new_start_date} - {new_end_date}")
+        new_reservation=Reservation.objects.create(
+            cabin = self.cabin,
+            customer = self.customer,
+            owner = self.owner,
+            start_date = new_start_date,
+            end_date = new_end_date, 
+        )
+        with self.assertRaises(ValidationError) as cm:
+            new_reservation.clean()
+        self.assertDictEqual({'__all__': ['Reservation overlaps with an existing booking.']}, cm.exception.message_dict
+                             )
 
     def test_calculate_length_of_stay(self):
         """
@@ -118,7 +148,6 @@ class TestReservation(TestCase):
             self.reservation.cabin.price_per_night * self.reservation.length_of_stay + self.services[1].service_price
         )
         self.assertEqual(self.reservation.get_total_price(), expected_price)
-
 
 class TestInvoice(TestCase):
     def setUp(self) -> None:

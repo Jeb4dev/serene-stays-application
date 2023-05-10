@@ -1,8 +1,10 @@
 from datetime import datetime
 from django.db import models
+from django.db.models import Q
 from users.models import User
 from cabins.models import Cabin
 from services.models import Service
+from django.core.exceptions import ValidationError
 
 
 class Reservation(models.Model):
@@ -22,6 +24,17 @@ class Reservation(models.Model):
 
     def __str__(self):
         return f"{self.cabin} {self.customer} {self.start_date} {self.end_date}"
+    
+    # Q object to query the database for any reservations that overlap the new reservation.
+    def clean(self):
+        super().clean()
+        overlapping_reservations = Reservation.objects.filter(
+            Q(start_date__range=(self.start_date, self.end_date)) |
+            Q(end_date__range=(self.start_date, self.end_date)) |
+            Q(start_date__lte=self.start_date, end_date__gte=self.end_date)
+        ).exclude(pk=self.pk)
+        if overlapping_reservations.exists():
+            raise ValidationError({'__all__': ['Reservation overlaps with an existing booking.']})
 
     @property
     def length_of_stay(self) -> int:
