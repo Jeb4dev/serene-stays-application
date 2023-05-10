@@ -23,8 +23,7 @@ class AreaServicesPage extends StatefulWidget {
 }
 
 class _AreaServicesPageState extends State<AreaServicesPage> {
-  final GlobalKey<FormState> _formKey = GlobalKey<FormState>();
-  List<Service> _services = [];
+  List<Service> services = [];
   Service? _selectedService;
   final TextEditingController _serviceNameController = TextEditingController();
   final TextEditingController _servicePriceController = TextEditingController();
@@ -48,17 +47,13 @@ class _AreaServicesPageState extends State<AreaServicesPage> {
         return ResponseData(responseData['message'], []);
       }
 
-      _services.clear();
+      services.clear();
 
       for (var c in responseData['data']) {
-        Service service = Service(
-          name: c['name'],
-          price: double.parse(c['service_price']),
-          description: c['description'],
-        );
-        _services.add(service);
+        Service service = Service(c['name'], c['description'], c['service_price']);
+        services.add(service);
       }
-      return ResponseData(responseData['result'], _services);
+      return ResponseData(responseData['result'], services);
     }
     catch (e) {
       return ResponseData('error', []);
@@ -71,10 +66,96 @@ class _AreaServicesPageState extends State<AreaServicesPage> {
     });
   }
 
-  void _onServiceDelete(Service service) {
-    setState(() {
-      widget.area.services.remove(service);
-    });
+  Future<ResponseData> addService(String name, description, servicePrice) async {
+    try {
+      var token = await storage.read(key: 'jwt');
+      var response = await post(
+        Uri.parse('http://127.0.0.1:8000/api/user/register'),
+        body: jsonEncode({
+          'name': name,
+          'description': description,
+          'service_price': servicePrice,
+        }),
+        headers: {
+          "Content-Type": "application/json",
+          "Accept": "application/json",
+          HttpHeaders.authorizationHeader: 'Bearer $token',
+        },
+      );
+      var data = json.decode(response.body);
+      if (data['status'] == 'success') {
+        Service service = Service(
+            data['data']['name'],
+            data['data']['description'],
+            data['data']['service_price'],
+        );
+        setState(() {
+          services.add(service);
+        });
+        return ResponseData(data['result'].toString(), [service]);
+      }
+      return ResponseData(data['message'].toString(),
+          [Service("null", "null", "null" as int)]);
+    } catch (e) {
+      return ResponseData(
+          e.toString(), [Service("null", "null", "null" as int)]);
+    }
+  }
+
+  Future<ResponseData> deleteService(String name) async {
+    var token = await storage.read(key: 'jwt');
+    var response = await delete(
+      Uri.parse('http://127.0.0.1:8000/api/area/services/delete?service=$name'),
+      headers: {
+        "Content-Type": "application/json",
+        "Accept": "application/json",
+        HttpHeaders.authorizationHeader: 'Bearer $token',
+      },
+    );
+    var data = json.decode(response.body);
+    if (data['result'] == 'success') {
+      setState(() {
+        services.removeWhere((element) => element.name == name);
+      });
+    }
+
+    return ResponseData(data['data'].toString(), null);
+  }
+
+  Future<ResponseData> editService(String name, description, servicePrice) async {
+    try {
+      var token = await storage.read(key: 'jwt');
+      var response = await put(
+        Uri.parse('http://127.0.0.1:8000/api/area/services/update?service=$name'),
+        body: jsonEncode({
+          'name': name,
+          'description': description,
+          'service_price': servicePrice,
+        }),
+        headers: {
+          "Content-Type": "application/json",
+          "Accept": "application/json",
+          HttpHeaders.authorizationHeader: 'Bearer $token',
+        },
+      );
+      var data = json.decode(response.body);
+      if (data['status'] == 'success') {
+        Service service = Service(
+            data['data']['name'],
+            data['data']['description'],
+            data['data']['service_price'],);
+        setState(() {
+          services.removeWhere((element) => element.name == name);
+          services.add(service);
+        });
+        return ResponseData(data['result'].toString(), [service]);
+      }
+      return ResponseData(data['message'].toString(),
+          [Service("null", "null", "null" as int)]);
+    } catch (e) {
+      return ResponseData(
+          e.toString(), [Service("null", "null", "null" as int)]);
+    }
   }
 
   void _showAddServiceDialog() {
@@ -82,7 +163,7 @@ class _AreaServicesPageState extends State<AreaServicesPage> {
       context: context,
       builder: (BuildContext context) {
         return AlertDialog(
-          title: const Text('Lisää'),
+          title: const Text('Lisää palvelu'),
           content: SingleChildScrollView(
             child: ListBody(
               children: <Widget>[
@@ -116,31 +197,28 @@ class _AreaServicesPageState extends State<AreaServicesPage> {
             ),
             TextButton(
               child: const Text('Lisää'),
-              onPressed: () {
-                if (_serviceNameController.text.isEmpty ||
-                    _servicePriceController.text.isEmpty ||
-                    _serviceDescriptionController.text.isEmpty) {
+              onPressed: () async {
+                var response = await addService(
+                    _serviceNameController.text,
+                    _servicePriceController.text,
+                    _serviceDescriptionController.text,);
+                if (response.message == "null") {
+                  Navigator.of(context).pop();
                   ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
-                    content: Text('Täytä kaikki kentät!'),
-                    duration: Duration(seconds: 2),
+                    content: Text("Palvelu lisätty onnistuneesti!"),
+                    duration: Duration(seconds: 4),
+                    backgroundColor: Colors.green,
                   ));
-                  return;
-                }
-                setState(() {
-                  widget.area.services.add(
-                    Service(
-                      name: _serviceNameController.text,
-                      price: double.parse(_servicePriceController.text),
-                      description: _serviceDescriptionController.text,
+                  setState(() {});
+                } else {
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    SnackBar(
+                      content: Text(response.message),
+                      duration: Duration(seconds: 4),
                     ),
                   );
-
-                  _serviceNameController.clear();
-                  _servicePriceController.clear();
-                  _serviceDescriptionController.clear();
-                });
-                Navigator.of(context).pop();
-              },
+                }
+                },
             ),
           ],
         );
@@ -148,87 +226,138 @@ class _AreaServicesPageState extends State<AreaServicesPage> {
     );
   }
 
-  void _onServiceEdit() {
+  void _showUpdateServiceDialog() {
     _serviceNameController.text = _selectedService!.name;
-    _servicePriceController.text = _selectedService!.price.toString();
+    _servicePriceController.text = _selectedService!.servicePrice.toString();
     _serviceDescriptionController.text = _selectedService!.description;
 
     showDialog(
       context: context,
       builder: (BuildContext context) {
         return AlertDialog(
-          title: const Text('Muokkaa'),
-          content: Form(
-            key: _formKey,
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                TextFormField(
+          title: const Text('Päivitä asiakkaan tietoja'),
+          content: SingleChildScrollView(
+            child: ListBody(
+              children: <Widget>[
+                TextField(
                   controller: _serviceNameController,
-                  decoration: const InputDecoration(labelText: 'Nimi'),
-                  validator: (String? value) {
-                    if (value == null || value.isEmpty) {
-                      return 'Syötä nimi!';
-                    }
-                    return null;
-                  },
+                  decoration: const InputDecoration(
+                    border: OutlineInputBorder(),
+                    labelText: 'Nimi',
+                  ),
                 ),
-                const SizedBox(height: 16.0),
-                TextFormField(
+                const SizedBox(height: 10),
+                TextField(
                   controller: _servicePriceController,
-                  keyboardType: TextInputType.number,
-                  decoration: const InputDecoration(labelText: 'Hinta'),
-                  validator: (String? value) {
-                    if (value == null || value.isEmpty) {
-                      return 'Syötä hinta!';
-                    }
-                    if (double.tryParse(value) == null) {
-                      return 'Hinta on numero! Syötä hinta!';
-                    }
-                    return null;
-                  },
+                  decoration: const InputDecoration(
+                    border: OutlineInputBorder(),
+                    labelText: 'Hinta',
+                  ),
                 ),
-                const SizedBox(height: 16.0),
-                TextFormField(
+                const SizedBox(height: 10),
+                TextField(
                   controller: _serviceDescriptionController,
-                  decoration: const InputDecoration(labelText: 'Kuvaus'),
-                  validator: (String? value) {
-                    if (value == null || value.isEmpty) {
-                      return 'Syötä kuvaus!';
-                    }
-                    return null;
-                  },
+                  decoration: const InputDecoration(
+                    border: OutlineInputBorder(),
+                    labelText: 'Kuvaus',
+                  ),
                 ),
               ],
             ),
           ),
-          actions: [
+          actions: <Widget>[
             TextButton(
+              child: const Text('PERUUTA'),
               onPressed: () {
+                // clear all fields
+                _serviceNameController.clear();
+                _servicePriceController.clear();
+                _serviceDescriptionController.clear();
+
                 Navigator.of(context).pop();
               },
-              child: const Text('Peruuta'),
             ),
             TextButton(
-              onPressed: () {
-                if (_formKey.currentState!.validate()) {
-                  setState(() {
-                    _selectedService!.name = _serviceNameController.text;
-                    _selectedService!.price =
-                        double.parse(_servicePriceController.text);
-                    _selectedService!.description =
-                        _serviceDescriptionController.text;
-                  });
+              child: const Text('PÄIVITÄ'),
+              onPressed: () async {
+                var response = await editService(
+                    _serviceNameController.text,
+                    _servicePriceController.text,
+                    _serviceDescriptionController.text,
+                );
+                setState(() {});
+                if (response.message == "null") {
                   Navigator.of(context).pop();
+                  ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
+                    content: Text("Palvelu päivitetty onnistuneesti!"),
+                    duration: Duration(seconds: 4),
+                    backgroundColor: Colors.green,
+                  ));
+                } else {
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    SnackBar(
+                      content: Text(response.message),
+                      duration: Duration(seconds: 4),
+                    ),
+                  );
                 }
               },
-              child: const Text('Tallenna'),
             ),
           ],
         );
       },
     );
   }
+
+  void _showDeleteServiceDialog(String name) {
+    showDialog(
+      context: context,
+      builder: (BuildContext context) {
+        return AlertDialog(
+          title: const Text('Poista palvelu'),
+          content: RichText(
+            text: TextSpan(
+              style: const TextStyle(
+                fontSize: 14.0,
+                color: Colors.black,
+              ),
+              children: <TextSpan>[
+                const TextSpan(text: 'Haluatko varmasti poistaa asiakkaan?'),
+                TextSpan(
+                    text: name,
+                    style: const TextStyle(fontWeight: FontWeight.bold)
+                ),
+                const TextSpan(text: ' ?\nTiedot katoavat pysyvästi.'),
+
+              ],
+            ),
+          ),
+          actions: <Widget>[
+            TextButton(
+              child: const Text('PERUUTA'),
+              onPressed: () {
+                Navigator.pop(context);
+              },
+            ),
+            TextButton(
+              child: const Text('POISTA'),
+              onPressed: () async {
+                var response = await deleteService(name);
+                ScaffoldMessenger.of(context).showSnackBar(
+                  SnackBar(
+                    content: Text(response.message),
+                  ),
+                );
+                setState(() {});
+                Navigator.pop(context);
+              },
+            ),
+          ],
+        );
+      },
+    );
+  }
+
 
   @override
   Widget build(BuildContext context) {
@@ -244,7 +373,7 @@ class _AreaServicesPageState extends State<AreaServicesPage> {
                 serviceWidgets.add(
                   ListTile(
                     title: Text(data.data![i].name),
-                    subtitle: Text('Hinta: ${data.data![i].price}'),
+                    subtitle: Text('Hinta: ${data.data![i].servicePrice}'),
                     onTap: () {
                       _onServiceTap(data.data![i]);
                     },
@@ -255,13 +384,13 @@ class _AreaServicesPageState extends State<AreaServicesPage> {
                         children: [
                           IconButton(
                             onPressed: () {
-                              _onServiceEdit();
+                              _showUpdateServiceDialog();
                             },
                             icon: const Icon(Icons.edit),
                           ),
                           IconButton(
                             onPressed: () {
-                              _onServiceDelete(data.data![i]);
+                              _showDeleteServiceDialog(data.data![i].name);
                             },
                             icon: const Icon(Icons.delete),
                           ),
