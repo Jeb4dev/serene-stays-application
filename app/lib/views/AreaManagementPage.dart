@@ -23,7 +23,7 @@ class AreaManagementPage extends StatefulWidget {
 
 class _AreaManagementPageState extends State<AreaManagementPage> {
   int _selectedIndex = -1;
-  final List<Area> _areas = areas;
+  final List<Area> _areas = [];
 
   final _areaNameController = TextEditingController();
 
