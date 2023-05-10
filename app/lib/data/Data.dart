@@ -1,4 +1,5 @@
 import 'dart:convert';
+import 'dart:ffi';
 
 import 'package:flutter/material.dart';
 
@@ -76,7 +77,7 @@ class Reservation {
 
 class Invoice {
   String reservation;
-  int? price;
+  double? price;
   String? customer;
   DateTime? createdAt;
   DateTime? paidAt;
