@@ -68,31 +68,157 @@ class _AreaManagementPageState extends State<AreaManagementPage> {
     });
   }
 
-  void _deleteArea() {
-    setState(() {
-      _areas.removeAt(_selectedIndex);
-      _selectedIndex = -1;
-    });
+  Future<ResponseData> editArea(String name) async {
+    try {
+      var token = await storage.read(key: 'jwt');
+      var response = await put(
+        Uri.parse('http://127.0.0.1:8000/api/area/update?area=$name'),
+        body: jsonEncode({
+          'name': name,
+        }),
+        headers: {
+          "Content-Type": "application/json",
+          "Accept": "application/json",
+          HttpHeaders.authorizationHeader: 'Bearer $token',
+        },
+      );
+      var data = json.decode(response.body);
+      if (data['status'] == 'success') {
+        Area area = Area(name: name, items: [], services: []);
+        setState(() {
+          _areas.removeWhere((element) => element.name == name);
+          _areas.add(area);
+        });
+        return ResponseData(data['result'].toString(), [area]);
+      }
+      return ResponseData(data['message'].toString(),
+          [Area(name: "null", items: [], services: [])]);
+    } catch (e) {
+      return ResponseData(
+          e.toString(), [Area(name: "null", items: [], services: [])]);
+    }
+  }
+  
+  void _showUpdateArea(String name) {
+    _areaNameController.text = name;
+    showDialog(
+      context: context,
+      builder: (BuildContext context) {
+        return AlertDialog(
+          title: const Text('Päivitä alueen nimi'),
+          content: SingleChildScrollView(
+            child: ListBody(
+              children: <Widget>[
+                TextField(
+                  controller: _areaNameController,
+                  decoration: const InputDecoration(
+                    border: OutlineInputBorder(),
+                    labelText: 'Uusi nimi',
+                  ),
+                ),
+              ],
+            ),
+          ),
+          actions: <Widget>[
+            TextButton(
+              child: const Text('PERUUTA'),
+              onPressed: () {
+                // clear all fields
+                _areaNameController.clear();
+
+                Navigator.of(context).pop();
+              },
+            ),
+            TextButton(
+              child: const Text('PÄIVITÄ'),
+              onPressed: () async {
+                var response = await editArea(
+                    _areaNameController.text,
+                );
+                setState(() {});
+                if (response.message == "null") {
+                  Navigator.of(context).pop();
+                  ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
+                    content: Text("Alueen nimi päivitetty onnistuneesti!"),
+                    duration: Duration(seconds: 4),
+                    backgroundColor: Colors.green,
+                  ));
+                } else {
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    SnackBar(
+                      content: Text(response.message),
+                      duration: Duration(seconds: 4),
+                    ),
+                  );
+                }
+              },
+            ),
+          ],
+        );
+      },
+    );
   }
 
-  void _showDeleteDialog() {
+  Future<ResponseData> deleteArea(String name) async {
+    var token = await storage.read(key: 'jwt');
+    var response = await delete(
+      Uri.parse('http://127.0.0.1:8000/api/area/delete?area=$name'),
+      headers: {
+        "Content-Type": "application/json",
+        "Accept": "application/json",
+        HttpHeaders.authorizationHeader: 'Bearer $token',
+      },
+    );
+    var data = json.decode(response.body);
+    if (data['result'] == 'success') {
+      setState(() {
+        _areas.removeWhere((element) => element.name == name);
+      });
+    }
+
+    return ResponseData(data['data'].toString(), null);
+  }
+
+  void _showDeleteDialog(String name) {
     showDialog(
       context: context,
       builder: (BuildContext context) {
         return AlertDialog(
           title: const Text('Poista alue'),
-          content: const Text('Oletko varma? Kaikki alueen tiedot poistetaan.'),
+          content: RichText(
+            text: TextSpan(
+              style: const TextStyle(
+                fontSize: 14.0,
+                color: Colors.black,
+              ),
+              children: <TextSpan>[
+                const TextSpan(text: 'Haluatko varmasti poistaa alueen?'),
+                TextSpan(
+                    text: name,
+                    style: const TextStyle(fontWeight: FontWeight.bold)
+                ),
+                const TextSpan(text: ' ?\nAlueen tiedot katoavat pysyvästi.'),
+
+              ],
+            ),
+          ),
           actions: <Widget>[
             TextButton(
-              child: const Text('Peruuta'),
+              child: const Text('PERUUTA'),
               onPressed: () {
                 Navigator.pop(context);
               },
             ),
             TextButton(
               child: const Text('POISTA'),
-              onPressed: () {
-                _deleteArea();
+              onPressed: () async {
+                var response = await deleteArea(name);
+                ScaffoldMessenger.of(context).showSnackBar(
+                  SnackBar(
+                    content: Text(response.message),
+                  ),
+                );
+                setState(() {});
                 Navigator.pop(context);
               },
             ),
@@ -216,6 +342,7 @@ class _AreaManagementPageState extends State<AreaManagementPage> {
     );
   }
 
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -297,13 +424,13 @@ class _AreaManagementPageState extends State<AreaManagementPage> {
                                 const SizedBox(width: 8),
                                 IconButton(
                                   onPressed: () {
-                                    _showRenameDialog();
+                                    _showUpdateArea(_areas[index].name);
                                   },
                                   icon: const Icon(Icons.edit),
                                 ),
                                 IconButton(
                                   onPressed: () {
-                                    _showDeleteDialog();
+                                    _showDeleteDialog(_areas[index].name);
                                   },
                                   icon: const Icon(Icons.delete),
                                 ),
