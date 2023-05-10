@@ -30,6 +30,7 @@ class _AreaItemsPageState extends State<AreaItemsPage> {
   final TextEditingController _itemPriceController = TextEditingController();
   final TextEditingController _itemDescriptionController = TextEditingController();
   final TextEditingController _itemAddressController = TextEditingController();
+  final TextEditingController _bedController = TextEditingController();
 
   Future<ResponseData> getAreaData() async {
     try {
@@ -53,7 +54,7 @@ class _AreaItemsPageState extends State<AreaItemsPage> {
       for (var c in responseData['data']) {
         Item cabin = Item(
           name: c['name'],
-          price: double.parse(c['price_per_night']),
+          price: (c['price_per_night']),
           description: c['description'],
           address: c['address'],
         );
@@ -61,7 +62,7 @@ class _AreaItemsPageState extends State<AreaItemsPage> {
       }
 
       return ResponseData(responseData['result'], _cabins);
-  }
+    }
     catch (e) {
       return ResponseData('error', []);
     }
@@ -77,6 +78,107 @@ class _AreaItemsPageState extends State<AreaItemsPage> {
     setState(() {
       widget.area.items.remove(item);
     });
+  }
+
+  void _showDeleteDialog(String name) {
+    showDialog(
+      context: context,
+      builder: (BuildContext context) {
+        return AlertDialog(
+          title: const Text('Poista mökki'),
+          content: RichText(
+            text: TextSpan(
+              style: const TextStyle(
+                fontSize: 14.0,
+                color: Colors.black,
+              ),
+              children: <TextSpan>[
+                const TextSpan(text: 'Haluatko varmasti poistaa mökin?'),
+                TextSpan(
+                    text: name,
+                    style: const TextStyle(fontWeight: FontWeight.bold)
+                ),
+                const TextSpan(text: ' ?\nMökin tiedot katoavat pysyvästi.'),
+
+              ],
+            ),
+          ),
+          actions: <Widget>[
+            TextButton(
+              child: const Text('PERUUTA'),
+              onPressed: () {
+                Navigator.pop(context);
+              },
+            ),
+            TextButton(
+              child: const Text('POISTA'),
+              onPressed: () async {
+                var response = await deleteItem(name);
+                ScaffoldMessenger.of(context).showSnackBar(
+                  SnackBar(
+                    content: Text(response.message),
+                  ),
+                );
+                setState(() {});
+                Navigator.pop(context);
+              },
+            ),
+          ],
+        );
+      },
+    );
+  }
+
+  Future<ResponseData> deleteItem(String name) async {
+    var token = await storage.read(key: 'jwt');
+    var response = await delete(
+      Uri.parse('http://127.0.0.1:8000/api/area/cabins/delete?cabin=$name'),
+      headers: {
+        "Content-Type": "application/json",
+        "Accept": "application/json",
+        HttpHeaders.authorizationHeader: 'Bearer $token',
+      },
+    );
+    var data = json.decode(response.body);
+    if (data['result'] == 'success') {
+      setState(() {
+        _cabins.removeWhere((element) => element.name == name);
+      });
+    }
+
+    return ResponseData(data['data'].toString(), null);
+  }
+
+  Future<ResponseData> addItem(String name, price, description, address, beds) async {
+    try {
+      var token = await storage.read(key: 'jwt');
+      var response = await post(
+        Uri.parse('http://127.0.0.1:8000/api/area/cabins/create'),
+        body: jsonEncode({
+          'name': name,
+          'description': description,
+          'price_per_night': price,
+          'zip_code': address,
+        }),
+        headers: {
+          "Content-Type": "application/json",
+          "Accept": "application/json",
+          HttpHeaders.authorizationHeader: 'Bearer $token',
+        },
+      );
+      var data = json.decode(response.body);
+      if (data['result'] == 'success') {
+        Item cabin = Item(name: name, price: price, description: description, address: address);
+        setState(() {
+          _cabins.add(cabin);
+        });
+        return ResponseData(data['result'].toString(), [cabin]);
+      }
+      return ResponseData(data['message'].toString(), [Item(name: "null", price: "null", description: "null", address: "null")]);
+    } catch (e) {
+      return ResponseData(
+          e.toString(), [Item(name: "null", price: "null", description: "null", address: "null")]);
+    }
   }
 
   void _showAddItemDialog() {
@@ -108,6 +210,11 @@ class _AreaItemsPageState extends State<AreaItemsPage> {
                   controller: _itemDescriptionController,
                   decoration: const InputDecoration(hintText: 'Kuvaus'),
                 ),
+                const SizedBox(height: 16.0),
+                TextField(
+                  controller: _bedController,
+                  decoration: const InputDecoration(hintText: 'Sänkyjen määrä'),
+                ),
               ],
             ),
           ),
@@ -124,33 +231,29 @@ class _AreaItemsPageState extends State<AreaItemsPage> {
             ),
             TextButton(
               child: const Text('Lisää'),
-              onPressed: () {
-                if (_itemNameController.text.isEmpty ||
-                    _itemPriceController.text.isEmpty ||
-                    _itemAddressController.text.isEmpty ||
-                    _itemDescriptionController.text.isEmpty) {
+              onPressed: () async {
+                var response = await addItem(
+                    _itemNameController.text,
+                    _itemPriceController.text,
+                    _itemAddressController.text,
+                    _itemDescriptionController.text,
+                    _bedController.text);
+                if (response.message == "null") {
+                  Navigator.of(context).pop();
                   ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
-                    content: Text('Täytä kaikki kentät!'),
-                    duration: Duration(seconds: 2),
+                    content: Text("Mökki lisätty onnistuneesti!"),
+                    duration: Duration(seconds: 4),
+                    backgroundColor: Colors.green,
                   ));
-                  return;
-                }
-                setState(() {
-                  widget.area.items.add(
-                    Item(
-                      name: _itemNameController.text,
-                      price: double.parse(_itemPriceController.text),
-                      address: _itemAddressController.text,
-                      description: _itemDescriptionController.text,
+                  setState(() {});
+                } else {
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    SnackBar(
+                      content: Text(response.message),
+                      duration: Duration(seconds: 4),
                     ),
                   );
-
-                  _itemNameController.clear();
-                  _itemPriceController.clear();
-                  _itemAddressController.clear();
-                  _itemDescriptionController.clear();
-                });
-                Navigator.of(context).pop();
+                }
               },
             ),
           ],
@@ -159,11 +262,11 @@ class _AreaItemsPageState extends State<AreaItemsPage> {
     );
   }
 
-  void _onItemEdit() {
+  void _showEditDialog() {
     _itemNameController.text = _selectedItem!.name;
-    _itemPriceController.text = _selectedItem!.price.toString();
-    _itemAddressController.text = _selectedItem!.address;
-    _itemDescriptionController.text = _selectedItem!.description;
+    _itemPriceController.text = _selectedItem!.price;
+    _itemAddressController.text = _selectedItem!.address!;
+    _itemDescriptionController.text = _selectedItem!.description!;
 
     showDialog(
       context: context,
@@ -233,20 +336,32 @@ class _AreaItemsPageState extends State<AreaItemsPage> {
               child: const Text('Peruuta'),
             ),
             TextButton(
-              onPressed: () {
-                if (_formKey.currentState!.validate()) {
-                  setState(() {
-                    _selectedItem!.name = _itemNameController.text;
-                    _selectedItem!.price =
-                        double.parse(_itemPriceController.text);
-                    _selectedItem!.address = _itemAddressController.text;
-                    _selectedItem!.description =
-                        _itemDescriptionController.text;
-                  });
+              child: const Text('PÄIVITÄ'),
+              onPressed: () async {
+                var response = await editItem(
+                    _itemNameController.text,
+                    _itemPriceController.text,
+                    _itemDescriptionController.text,
+                    _itemAddressController.text,
+                    _bedController
+                );
+                setState(() {});
+                if (response.message == "null") {
                   Navigator.of(context).pop();
+                  ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
+                    content: Text("Mökki päivitetty onnistuneesti!"),
+                    duration: Duration(seconds: 4),
+                    backgroundColor: Colors.green,
+                  ));
+                } else {
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    SnackBar(
+                      content: Text(response.message),
+                      duration: Duration(seconds: 4),
+                    ),
+                  );
                 }
               },
-              child: const Text('Tallenna'),
             ),
           ],
         );
@@ -254,125 +369,161 @@ class _AreaItemsPageState extends State<AreaItemsPage> {
     );
   }
 
+  Future<ResponseData> editItem(String name, price, description, beds,
+      address) async {
+    try {
+      var token = await storage.read(key: 'jwt');
+      var response = await put(
+        Uri.parse('http://127.0.0.1:8000/api/area/cabins/update?cabin=$name'),
+        body: jsonEncode({
+          "name": name,
+          "description": description,
+          "price_per_night": price,
+          "zip_code": address,
+          "num_of_beds": beds
+        }),
+        headers: {
+          "Content-Type": "application/json",
+          "Accept": "application/json",
+          HttpHeaders.authorizationHeader: 'Bearer $token',
+        },
+      );
+      var data = json.decode(response.body);
+      if (data['status'] == 'success') {
+        Item item = Item(name: name, price: price, description: description, address: address);
+        setState(() {
+          _cabins.removeWhere((element) => element.name == name);
+          _cabins.add(item);
+        });
+        return ResponseData(data['result'].toString(), [item]);
+      }
+      return ResponseData(data['message'].toString(),
+          [Item(name: name, price: price, description: description, address: address)]);
+    } catch (e) {
+      return ResponseData(
+          e.toString(), [Item(name: name, price: price, description: description, address: address)]);
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-        body: FutureBuilder<ResponseData>(
-          future: getAreaData(),
-          builder: (context, snapshot) {
-            if (snapshot.connectionState == ConnectionState.done) {
-              if (snapshot.hasData) {
-                ResponseData data = snapshot.data!;
-                List<Widget> cabinWidgets = [];
-                for (int i = 0; i < data.data!.length; i++) {
-                  cabinWidgets.add(
-                      ListTile(
-                        title: Text(data.data![i].name),
-                        subtitle: Text('Hinta: ${data.data![i].price}'),
-                        onTap: () {
-                          _onItemTap(data.data![i]);
-                        },
-                        trailing: Visibility(
-                          visible: true,
-                          child: Row(
-                            mainAxisSize: MainAxisSize.min,
-                            children: [
-                              IconButton(
-                                onPressed: () {
-                                  _onItemEdit();
-                                },
-                                icon: const Icon(Icons.edit),
-                              ),
-                              IconButton(
-                                onPressed: () {
-                                  _onItemDelete(data.data![i]);
-                                },
-                                icon: const Icon(Icons.delete),
-                              ),
-                            ],
-                          ),
-                        ),
-                      ),
-                  );
-                }
-                if (data.data!.isEmpty) {
-                  cabinWidgets.add(
-                    Center(
-                      child: Column(children: [
-                        const SizedBox(height: 10),
-                        Text(
-                          "Mökkejä ei löytynyt!\n error: ${data.message}",
-                          style: const TextStyle(
-                            fontSize: 15,
-                            fontWeight: FontWeight.bold,
-                          ),
-                        ),
-                      ]),
-                    ),
-                  );
-                }
-                // display data here
-                return Scaffold(
-                  appBar: AppBar(
-                    title: Text(widget.area.name),
-                  ),
-                  body: Padding(
-                    padding: const EdgeInsets.all(8.0),
-                    child: Column(
-                      children: [
-                        const SizedBox(height: 10),
-                        const Text(
-                          "Mökit",
-                          style: TextStyle(
-                            fontSize: 20,
-                            fontWeight: FontWeight.bold,
-                          ),
-                        ),
-                        const SizedBox(height: 10),
-                        Expanded(
-                          child: ListView(
-                            children: cabinWidgets,
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
-
-
-                  floatingActionButton: FloatingActionButton(
-                    child: const Icon(Icons.add),
-                    onPressed: () {
-                      _showAddItemDialog();
+      body: FutureBuilder<ResponseData>(
+        future: getAreaData(),
+        builder: (context, snapshot) {
+          if (snapshot.connectionState == ConnectionState.done) {
+            if (snapshot.hasData) {
+              ResponseData data = snapshot.data!;
+              List<Widget> cabinWidgets = [];
+              for (int i = 0; i < data.data!.length; i++) {
+                cabinWidgets.add(
+                  ListTile(
+                    title: Text(data.data![i].name),
+                    subtitle: Text('Hinta: ${data.data![i].price}'),
+                    onTap: () {
+                      _onItemTap(data.data![i]);
                     },
-                  ),
-                );
-              } else if (snapshot.hasError) {
-                // handle error here
-                String error = snapshot.error.toString();
-
-                return Scaffold(
-                  body: Center(
-                    child: Column(
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      children: [
-                        const Text("Mökkien haku epäonnistui!"),
-                        const SizedBox(height: 10),
-                        const Text(
-                            "Tarkista internet-yhteys ja yritä uudelleen!"),
-                        const SizedBox(height: 200),
-                        const Text("Virheilmoitus kehittäjälle:"),
-                        const SizedBox(height: 10),
-                        Text(error),
-                      ],
+                    trailing: Visibility(
+                      visible: true,
+                      child: Row(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          IconButton(
+                            onPressed: () {
+                              _showEditDialog();
+                            },
+                            icon: const Icon(Icons.edit),
+                          ),
+                          IconButton(
+                            onPressed: () {
+                              _showDeleteDialog(data.data![i].name);
+                            },
+                            icon: const Icon(Icons.delete),
+                          ),
+                        ],
+                      ),
                     ),
                   ),
                 );
               }
+              if (data.data!.isEmpty) {
+                cabinWidgets.add(
+                  Center(
+                    child: Column(children: [
+                      const SizedBox(height: 10),
+                      Text(
+                        "Mökkejä ei löytynyt!\n error: ${data.message}",
+                        style: const TextStyle(
+                          fontSize: 15,
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
+                    ]),
+                  ),
+                );
+              }
+              // display data here
+              return Scaffold(
+                appBar: AppBar(
+                  title: Text(widget.area.name),
+                ),
+                body: Padding(
+                  padding: const EdgeInsets.all(8.0),
+                  child: Column(
+                    children: [
+                      const SizedBox(height: 10),
+                      const Text(
+                        "Mökit",
+                        style: TextStyle(
+                          fontSize: 20,
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
+                      const SizedBox(height: 10),
+                      Expanded(
+                        child: ListView(
+                          children: cabinWidgets,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+
+
+                floatingActionButton: FloatingActionButton(
+                  child: const Icon(Icons.add),
+                  onPressed: () {
+                    _showAddItemDialog();
+                  },
+                ),
+              );
+            } else if (snapshot.hasError) {
+              // handle error here
+              String error = snapshot.error.toString();
+
+              return Scaffold(
+                body: Center(
+                  child: Column(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      const Text("Mökkien haku epäonnistui!"),
+                      const SizedBox(height: 10),
+                      const Text(
+                          "Tarkista internet-yhteys ja yritä uudelleen!"),
+                      const SizedBox(height: 200),
+                      const Text("Virheilmoitus kehittäjälle:"),
+                      const SizedBox(height: 10),
+                      Text(error),
+                    ],
+                  ),
+                ),
+              );
             }
-            // handle other connection states here
-            return CircularProgressIndicator();
-          },
-        ),
+          }
+          // handle other connection states here
+          return CircularProgressIndicator();
+        },
+      ),
     );
   }
 }

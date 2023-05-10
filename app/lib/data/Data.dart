@@ -1,5 +1,4 @@
 import 'dart:convert';
-import 'dart:ffi';
 
 import 'package:flutter/material.dart';
 
@@ -28,15 +27,15 @@ class Area {
 
 class Item {
   String name;
-  double price;
+  String price;
   String description;
   String address;
 
   Item(
       {required this.name,
-      required this.price,
-      required this.description,
-      required this.address});
+        required this.price,
+        required this.description,
+        required this.address});
 }
 
 class Service {
@@ -45,8 +44,8 @@ class Service {
   final int servicePrice;
 
   Service(
-    this.name, this.description, this.servicePrice
-  );
+      this.name, this.description, this.servicePrice
+      );
 }
 
 

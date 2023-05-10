@@ -23,7 +23,7 @@ class AreaManagementPage extends StatefulWidget {
 
 class _AreaManagementPageState extends State<AreaManagementPage> {
   int _selectedIndex = -1;
-  final List<Area> _areas = areas;
+  final List<Area> _areas = [];
 
   final _areaNameController = TextEditingController();
 
@@ -167,46 +167,46 @@ class _AreaManagementPageState extends State<AreaManagementPage> {
                   return;
                 }
                 else {
-                    try {
-                      var token = await storage.read(key: 'jwt');
-                      var response = await post(
-                        Uri.parse('http://127.0.0.1:8000/api/area/create'),
-                        body: jsonEncode({
-                          'area': _areaNameController.text,
-                        }),
-                        headers: {
-                          "Content-Type": "application/json",
-                          "Accept": "application/json",
-                          HttpHeaders.authorizationHeader: 'Bearer $token',
-                        },
+                  try {
+                    var token = await storage.read(key: 'jwt');
+                    var response = await post(
+                      Uri.parse('http://127.0.0.1:8000/api/area/create'),
+                      body: jsonEncode({
+                        'area': _areaNameController.text,
+                      }),
+                      headers: {
+                        "Content-Type": "application/json",
+                        "Accept": "application/json",
+                        HttpHeaders.authorizationHeader: 'Bearer $token',
+                      },
+                    );
+                    var data = json.decode(response.body);
+                    if (data['result'] == 'success') {
+                      Area area = Area(
+                        name: _areaNameController.text,
+                        items: [],
+                        services: [],
                       );
-                      var data = json.decode(response.body);
-                      if (data['result'] == 'success') {
-                        Area area = Area(
-                          name: _areaNameController.text,
-                          items: [],
-                          services: [],
-                        );
-                        setState(() {
-                          _areas.add(area);
-                        });
-                      } else {
-                        ScaffoldMessenger.of(context)
-                            .showSnackBar(SnackBar(
-                          content: Text('Alueen lisääminen epäonnistui! ' + data['message']),
-                          duration: const Duration(seconds: 6),
-                        ));
-                      }
-                    } catch (e) {
-                      ScaffoldMessenger.of(context).showSnackBar(SnackBar(
-                        content: Text(
-                            'Alueen lisääminen epäonnistui! ' + e.toString()),
+                      setState(() {
+                        _areas.add(area);
+                      });
+                    } else {
+                      ScaffoldMessenger.of(context)
+                          .showSnackBar(SnackBar(
+                        content: Text('Alueen lisääminen epäonnistui! ' + data['message']),
                         duration: const Duration(seconds: 6),
                       ));
                     }
-
-                    _areaNameController.clear();
+                  } catch (e) {
+                    ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+                      content: Text(
+                          'Alueen lisääminen epäonnistui! ' + e.toString()),
+                      duration: const Duration(seconds: 6),
+                    ));
                   }
+
+                  _areaNameController.clear();
+                }
                 Navigator.of(context).pop();
               },
             ),
