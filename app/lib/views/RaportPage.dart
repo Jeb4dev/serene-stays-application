@@ -164,7 +164,7 @@ class _RaportPageState extends State<RaportPage> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: Text('Raport'),
+        title: Text('Raportti'),
         centerTitle: true,
       ),
       body: ListView(
@@ -198,7 +198,7 @@ class _RaportPageState extends State<RaportPage> {
 // calculate income per cabin
                 SizedBox(height: 20),
                 Text(
-                    'Mökkien tuotto: ${widget.reservations.fold(0, (previousValue, element) => (previousValue + element.cost!).toInt())}',
+                    'Mökkien tuotto: ${widget.reservations.fold(0, (previousValue, element) => (previousValue + element.cost!).toInt())} €',
                     style: TextStyle(fontSize: 18)),
                 SizedBox(height: 20),
                 // calculate income per cabin
@@ -217,8 +217,8 @@ class _RaportPageState extends State<RaportPage> {
                     'Palveluiden tuotto yhteensä: ${widget.services.fold(0, (previousValue, element) => (previousValue + element.servicePrice).toInt())} €',
                     style: TextStyle(fontSize: 18)),
                 Text(
-                    'Keskimääräinen tuotto per palvelu: ${widget.services.fold(0, (previousValue, element) => (previousValue + element.servicePrice / widget.services.length).toInt())} €',
-                    style: TextStyle(fontSize: 18)),
+                    'Keskimääräinen tuotto per palvelu: ${widget.services.length > 0 ? (widget.services.fold(0, (previousValue, element) => (previousValue + element.servicePrice / widget.services.length).toInt())) : 0} €',
+                    style: TextStyle(fontSize: 21)),
                 SizedBox(height: 20),
                 // calculate income per service
                 ...widget.services.map((service) {
@@ -234,7 +234,7 @@ class _RaportPageState extends State<RaportPage> {
                 }),
                 SizedBox(height: 20),
                 Text(
-                    'Keskimääräinen tuotto per asiakas: ${widget.reservations.fold(0, (previousValue, element) => (previousValue + element.cost! / widget.users.length).toInt())}',
+                    'Keskimääräinen tuotto per asiakas: ${widget.users.length > 0 ? (widget.reservations.fold(0, (previousValue, element) => (previousValue + element.cost! / widget.users.length).toInt())) : 0} €',
                     style: TextStyle(fontSize: 21)),
                 SizedBox(height: 20),
                 // calculate income per customer

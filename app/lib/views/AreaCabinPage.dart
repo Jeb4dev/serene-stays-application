@@ -174,10 +174,10 @@ class _AreaItemsPageState extends State<AreaItemsPage> {
         });
         return ResponseData(data['result'].toString(), [cabin]);
       }
-      return ResponseData(data['message'].toString(), [Item(name: "null", price: "null", description: "null", address: "null")]);
+      return ResponseData(data['message'].toString(), [Item(name: "null", price: 0, description: "null", address: "null")]);
     } catch (e) {
       return ResponseData(
-          e.toString(), [Item(name: "null", price: "null", description: "null", address: "null")]);
+          e.toString(), [Item(name: "null", price: 0, description: "null", address: "null")]);
     }
   }
 
@@ -264,9 +264,9 @@ class _AreaItemsPageState extends State<AreaItemsPage> {
 
   void _showEditDialog() {
     _itemNameController.text = _selectedItem!.name;
-    _itemPriceController.text = _selectedItem!.price;
-    _itemAddressController.text = _selectedItem!.address!;
-    _itemDescriptionController.text = _selectedItem!.description!;
+    _itemPriceController.text = _selectedItem!.price.toString();
+    _itemAddressController.text = _selectedItem!.address;
+    _itemDescriptionController.text = _selectedItem!.description;
 
     showDialog(
       context: context,
