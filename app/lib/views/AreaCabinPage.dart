@@ -159,6 +159,7 @@ class _AreaItemsPageState extends State<AreaItemsPage> {
           'description': description,
           'price_per_night': price,
           'zip_code': address,
+          'num_of_beds': beds
         }),
         headers: {
           "Content-Type": "application/json",
