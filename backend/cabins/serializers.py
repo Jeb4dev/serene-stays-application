@@ -10,6 +10,7 @@ class CabinSerializer(serializers.ModelSerializer):
     class Meta:
         model = Cabin
         fields = [
+            "id",
             "name",
             "description",
             "price_per_night",
@@ -21,6 +22,7 @@ class CabinSerializer(serializers.ModelSerializer):
         read_only_fields = ["id", "created_at", "updated_at"]
         extra_kwargs = {
             "address": {"required": False},
+            "id": {"required": False},
         }
 
     def create(self, validated_data):
