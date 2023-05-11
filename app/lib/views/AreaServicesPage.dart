@@ -70,7 +70,7 @@ class _AreaServicesPageState extends State<AreaServicesPage> {
     try {
       var token = await storage.read(key: 'jwt');
       var response = await post(
-        Uri.parse('http://127.0.0.1:8000/api/user/register'),
+        Uri.parse('http://127.0.0.1:8000/api/service/create'),
         body: jsonEncode({
           'name': name,
           'description': description,

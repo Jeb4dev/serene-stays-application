@@ -33,9 +33,9 @@ class Item {
 
   Item(
       {required this.name,
-      required this.price,
-      required this.description,
-      required this.address});
+        required this.price,
+        required this.description,
+        required this.address});
 }
 
 class Service {
