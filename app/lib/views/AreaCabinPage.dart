@@ -74,11 +74,6 @@ class _AreaItemsPageState extends State<AreaItemsPage> {
     });
   }
 
-  void _onItemDelete(Item item) {
-    setState(() {
-      widget.area.items.remove(item);
-    });
-  }
 
   void _showDeleteDialog(String name) {
     showDialog(
@@ -159,7 +154,8 @@ class _AreaItemsPageState extends State<AreaItemsPage> {
           'description': description,
           'price_per_night': price,
           'zip_code': address,
-          'num_of_beds': beds
+          'num_of_beds': beds,
+          'area': widget.area.name
         }),
         headers: {
           "Content-Type": "application/json",
@@ -235,11 +231,11 @@ class _AreaItemsPageState extends State<AreaItemsPage> {
               onPressed: () async {
                 var response = await addItem(
                     _itemNameController.text,
-                    _itemPriceController.text,
-                    _itemAddressController.text,
+                    double.parse(_itemPriceController.text),
                     _itemDescriptionController.text,
+                    _itemAddressController.text,
                     _bedController.text);
-                if (response.message == "null") {
+                if (response.message == "null" || response.message == "success") {
                   Navigator.of(context).pop();
                   ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
                     content: Text("Mökki lisätty onnistuneesti!"),
@@ -341,10 +337,11 @@ class _AreaItemsPageState extends State<AreaItemsPage> {
               onPressed: () async {
                 var response = await editItem(
                     _itemNameController.text,
-                    _itemPriceController.text,
+                    double.parse(_itemPriceController.text),
                     _itemDescriptionController.text,
+                    _bedController.text,
                     _itemAddressController.text,
-                    _bedController
+
                 );
                 setState(() {});
                 if (response.message == "null") {
