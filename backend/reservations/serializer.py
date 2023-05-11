@@ -34,7 +34,7 @@ class ReservationSerializer(serializers.ModelSerializer):
             instance = self.Meta.model(**validated_data)
             validated_data.pop("canceled_at", None)
             validated_data.pop("accepted_at", None)
-            instance.save()
+
             return instance
 
         def update(self, instance, validated_data):

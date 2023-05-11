@@ -51,8 +51,11 @@ def create_reservation(request):
             raise AuthenticationFailed("Unauthenticated: no token provided!")
         serializer = ReservationSerializer(data=request.data)
         serializer.is_valid(raise_exception=True)
-        serializer.create(serializer.validated_data)
-        serializer.save(customer=user)
+        serializer.save()
+
+        invoice = Invoice.objects.create(reservation=serializer.instance)
+        invoice.save()
+
         return Response({"result": "success", "data": serializer.data}, status=status.HTTP_201_CREATED)
     except AuthenticationFailed as e:
         return Response({"result": "error", "message": e.detail}, status=status.HTTP_401_UNAUTHORIZED)
@@ -224,7 +227,7 @@ def update_invoice(request):
 
         reservation_id = request.GET.get("invoice")
 
-        invoice = get_object_or_404(Invoice, pk=reservation_id)
+        invoice = get_object_or_404(Invoice, reservation_id=reservation_id)
 
         if invoice.reservation.customer.id != user.id:
             if not user.is_staff:
