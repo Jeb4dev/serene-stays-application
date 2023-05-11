@@ -1,5 +1,6 @@
 
 class User {
+  int? id;
   final String username;
   final String? first_name;
   final String? last_name;
@@ -9,5 +10,5 @@ class User {
   final String? zip;
 
 
-  User(this.username, this.email, this.first_name, this.last_name, this.address, this.phone, this.zip);
+  User(this.username, this.email, this.first_name, this.last_name, this.address, this.phone, this.zip, {this.id});
 }

@@ -39,13 +39,14 @@ class Item {
 }
 
 class Service {
+  final int id;
   final String name;
   final String description;
   final int servicePrice;
+  String? area;
 
   Service(
-    this.name, this.description, this.servicePrice
-  );
+    this.id, this.name, this.description, this.servicePrice, {this.area});
 }
 
 
@@ -95,6 +96,7 @@ class Invoice {
 }
 
 class Cabin {
+  int? id;
   String name;
   String description;
   double price;
@@ -103,6 +105,7 @@ class Cabin {
   int numberOfBeds;
 
   Cabin({
+    this.id,
     required this.name,
     required this.description,
     required this.price,

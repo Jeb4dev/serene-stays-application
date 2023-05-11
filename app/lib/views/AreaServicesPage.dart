@@ -50,7 +50,7 @@ class _AreaServicesPageState extends State<AreaServicesPage> {
       services.clear();
 
       for (var c in responseData['data']) {
-        Service service = Service(c['name'], c['description'], c['service_price']);
+        Service service = Service(c['id'], c['name'], c['description'], c['service_price']);
         services.add(service);
       }
       return ResponseData(responseData['result'], services);
@@ -85,6 +85,7 @@ class _AreaServicesPageState extends State<AreaServicesPage> {
       var data = json.decode(response.body);
       if (data['status'] == 'success') {
         Service service = Service(
+            data['data']['id'],
             data['data']['name'],
             data['data']['description'],
             data['data']['service_price'],
@@ -95,10 +96,10 @@ class _AreaServicesPageState extends State<AreaServicesPage> {
         return ResponseData(data['result'].toString(), [service]);
       }
       return ResponseData(data['message'].toString(),
-          [Service("null", "null", "null" as int)]);
+          [Service(0, "null", "null", "null" as int)]);
     } catch (e) {
       return ResponseData(
-          e.toString(), [Service("null", "null", "null" as int)]);
+          e.toString(), [Service(0, "null", "null", "null" as int)]);
     }
   }
 
@@ -141,6 +142,7 @@ class _AreaServicesPageState extends State<AreaServicesPage> {
       var data = json.decode(response.body);
       if (data['status'] == 'success') {
         Service service = Service(
+            data['data']['id'],
             data['data']['name'],
             data['data']['description'],
             data['data']['service_price'],);
@@ -151,10 +153,10 @@ class _AreaServicesPageState extends State<AreaServicesPage> {
         return ResponseData(data['result'].toString(), [service]);
       }
       return ResponseData(data['message'].toString(),
-          [Service("null", "null", "null" as int)]);
+          [Service(0, "null", "null", "null" as int)]);
     } catch (e) {
       return ResponseData(
-          e.toString(), [Service("null", "null", "null" as int)]);
+          e.toString(), [Service(0, "null", "null", "null" as int)]);
     }
   }
 
