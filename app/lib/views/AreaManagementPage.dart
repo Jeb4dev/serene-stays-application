@@ -68,13 +68,13 @@ class _AreaManagementPageState extends State<AreaManagementPage> {
     });
   }
 
-  Future<ResponseData> editArea(String name) async {
+  Future<ResponseData> editArea(String name, original) async {
     try {
       var token = await storage.read(key: 'jwt');
-      var response = await put(
-        Uri.parse('http://127.0.0.1:8000/api/area/update?area=$name'),
+      var response = await patch(
+        Uri.parse('http://127.0.0.1:8000/api/area/update?area=$original'),
         body: jsonEncode({
-          'name': name,
+          'area': name,
         }),
         headers: {
           "Content-Type": "application/json",
@@ -101,11 +101,12 @@ class _AreaManagementPageState extends State<AreaManagementPage> {
   
   void _showUpdateArea(String name) {
     _areaNameController.text = name;
+    var original_name = name;
     showDialog(
       context: context,
       builder: (BuildContext context) {
         return AlertDialog(
-          title: const Text('Päivitä alueen nimi'),
+          title: const Text('Päivitä alueen nimi (ei toimi koska tietokanta suuniteltu huonosti)'),
           content: SingleChildScrollView(
             child: ListBody(
               children: <Widget>[
@@ -134,6 +135,7 @@ class _AreaManagementPageState extends State<AreaManagementPage> {
               onPressed: () async {
                 var response = await editArea(
                     _areaNameController.text,
+                    original_name
                 );
                 setState(() {});
                 if (response.message == "null") {
@@ -192,12 +194,12 @@ class _AreaManagementPageState extends State<AreaManagementPage> {
                 color: Colors.black,
               ),
               children: <TextSpan>[
-                const TextSpan(text: 'Haluatko varmasti poistaa alueen?'),
+                const TextSpan(text: 'Haluatko varmasti poistaa alueen '),
                 TextSpan(
                     text: name,
                     style: const TextStyle(fontWeight: FontWeight.bold)
                 ),
-                const TextSpan(text: ' ?\nAlueen tiedot katoavat pysyvästi.'),
+                const TextSpan(text: '? \nAlueen tiedot katoavat pysyvästi.'),
 
               ],
             ),
