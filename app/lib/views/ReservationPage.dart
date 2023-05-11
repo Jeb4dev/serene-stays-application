@@ -16,13 +16,16 @@ class _ReservationPageState extends State<ReservationPage> {
     'Peruutetut'
   ];
 
+  final TextEditingController _cottageController = TextEditingController();
+  final TextEditingController _areaController = TextEditingController();
+
   void _openReservationPage(String reservationStatus) {
     Widget page;
 
     if (reservationStatus == 'Hyväksytyt') {
       page = ApprovedReservation();
     } else {
-      page = ReservationStatusPage(
+      page = ReservationStatusPages(
         reservationStatus: reservationStatus,
       );
     }
@@ -31,6 +34,59 @@ class _ReservationPageState extends State<ReservationPage> {
       MaterialPageRoute(
         builder: (context) => page,
       ),
+    );
+  }
+
+  void _showAddReservationDialog() {
+    showDialog(
+      context: context,
+      builder: (BuildContext context) {
+        return AlertDialog(
+          title: const Text('Lisää uusi varaus'),
+          content: SingleChildScrollView(
+            child: ListBody(
+              children: <Widget>[
+                TextField(
+                  controller: _cottageController,
+                  decoration: const InputDecoration(hintText: 'Mökki'),
+                ),
+                const SizedBox(height: 16.0),
+                TextField(
+                  controller: _areaController,
+                  decoration: const InputDecoration(hintText: 'Alueet'),
+                ),
+              ],
+            ),
+          ),
+          actions: <Widget>[
+            TextButton(
+              child: const Text('Peruuta'),
+              onPressed: () {
+                _cottageController.clear();
+                _areaController.clear();
+                Navigator.of(context).pop();
+              },
+            ),
+            TextButton(
+              child: const Text('Lisää'),
+              onPressed: () {
+                if (_cottageController.text.isEmpty ||
+                    _areaController.text.isEmpty) {
+                  ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
+                    content: Text('Täytä kaikki kentät!'),
+                    duration: Duration(seconds: 2),
+                  ));
+                  return;
+                }
+                // Implement the logic for adding a reservation
+                _cottageController.clear();
+                _areaController.clear();
+                Navigator.of(context).pop();
+              },
+            ),
+          ],
+        );
+      },
     );
   }
 
@@ -72,10 +128,14 @@ class _ReservationPageState extends State<ReservationPage> {
           ),
         ],
       ),
+      
+
+
+
+      
+      
       floatingActionButton: FloatingActionButton(
-        onPressed: () {
-          // Implement add reservation action here
-        },
+        onPressed: _showAddReservationDialog,
         tooltip: 'Lisää uusi varaus',
         child: const Icon(Icons.add),
       ),
@@ -83,10 +143,13 @@ class _ReservationPageState extends State<ReservationPage> {
   }
 }
 
-class ReservationStatusPage extends StatelessWidget {
+
+
+
+class ReservationStatusPages extends StatelessWidget {
   final String reservationStatus;
 
-  const ReservationStatusPage({Key? key, required this.reservationStatus})
+  const ReservationStatusPages({Key? key, required this.reservationStatus})
       : super(key: key);
 
   @override
@@ -124,6 +187,11 @@ class _ApprovedReservationState extends State<ApprovedReservation> {
     },
   ];
 
+  
+
+  
+  
+  
   @override
   Widget build(BuildContext context) {
     return Scaffold(
