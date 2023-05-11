@@ -334,7 +334,7 @@ class _AddNewReservationState extends State<AddNewReservation> {
       );
     }
 
-    print('Failed to fetch areas: ${response.statusCode} ${response.body}');
+    print('Failed to create reservation: ${response.statusCode} ${response.body}');
 
     return myType(
       responseData['result'],
@@ -585,7 +585,6 @@ class _AddNewReservationState extends State<AddNewReservation> {
             }
 
             var response = await _addReservation();
-            print(response.result);
             if (response.result == "success") {
               ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
                 content: Text('Varaus lisätty onnistuneesti!'),

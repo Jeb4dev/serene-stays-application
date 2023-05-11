@@ -9,6 +9,10 @@ class ReservationSerializer(serializers.ModelSerializer):
     Serializer for the Cabin model.
     """
 
+    price = serializers.SerializerMethodField(
+        method_name="get_price"
+    )
+
     class Meta:
         model = Reservation
         fields = [
@@ -21,14 +25,17 @@ class ReservationSerializer(serializers.ModelSerializer):
             "created_at",
             "canceled_at",
             "accepted_at",
+            "price",
         ]
         extra_kwargs = {
             "created_at": {"required": False},
             "canceled_at": {"required": False},
             "accepted_at": {"required": False},
+            "price": {"required": False, "read_only": True},
         }
 
         read_only_fields = ["id", "updated_at"]
+
 
         def create(self, validated_data):
             instance = self.Meta.model(**validated_data)
@@ -59,6 +66,9 @@ class ReservationSerializer(serializers.ModelSerializer):
             instance.save()
 
             return instance
+
+    def get_price(self, obj):
+        return obj.get_total_price()
 
 
 class InvoiceSerializer(serializers.ModelSerializer):

@@ -60,6 +60,7 @@ class Reservation {
   String? createdAt;
   String? acceptedAt;
   String? cancelledAt;
+  double? cost;
 
   Reservation({
     required this.cabin,
@@ -71,6 +72,7 @@ class Reservation {
     required this.createdAt,
     required this.acceptedAt,
     required this.cancelledAt,
+    this.cost
   });
 }
 
