@@ -39,6 +39,11 @@ class CabinModelTest(TestCase):
         area = Area.objects.get(area="Test Area 51")
         self.assertEqual(cabin.area, area)
 
+    def test_zip_code_foreign_key(self):
+         cabin = Cabin.objects.get(id=1)
+         post_code = PostCode.objects.get(p_code="66669")
+         self.assertEqual(cabin.zip_code, post_code)
+
     # Test the number of beds in the cabin
     def test_num_of_beds(self):
         cabin = Cabin.objects.get(id=1)
