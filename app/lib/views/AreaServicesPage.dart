@@ -50,7 +50,7 @@ class _AreaServicesPageState extends State<AreaServicesPage> {
       services.clear();
 
       for (var c in responseData['data']) {
-        Service service = Service(c['id'], c['name'], c['description'], c['service_price']);
+        Service service = Service(c['id'], c['name'], c['description'], double.parse(c['service_price']) as int, area: widget.area.name);
         services.add(service);
       }
       return ResponseData(responseData['result'], services);
@@ -89,7 +89,8 @@ class _AreaServicesPageState extends State<AreaServicesPage> {
             data['data']['id'],
             data['data']['name'],
             data['data']['description'],
-            data['data']['service_price'],
+            int.parse(data['data']['service_price']),
+            area: widget.area.name
         );
         setState(() {
           services.add(service);

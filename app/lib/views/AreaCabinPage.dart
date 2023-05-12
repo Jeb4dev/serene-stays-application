@@ -54,10 +54,11 @@ class _AreaItemsPageState extends State<AreaItemsPage> {
       for (var c in responseData['data']) {
         Item cabin = Item(
           name: c['name'],
-          price: (c['price_per_night']),
+          price: double.parse(c['price_per_night']),
           description: c['description'],
           address: c['address'],
         );
+        print(cabin);
         _cabins.add(cabin);
       }
 
