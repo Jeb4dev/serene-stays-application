@@ -85,6 +85,7 @@ class Invoice {
   DateTime? paidAt;
   DateTime? cancelledAt;
   DateTime? updatedAt;
+  String? pdf;
 
   Invoice({
     required this.reservation,
@@ -94,6 +95,7 @@ class Invoice {
     required this.paidAt,
     required this.cancelledAt,
     required this.updatedAt,
+    this.pdf
   });
 }
 
