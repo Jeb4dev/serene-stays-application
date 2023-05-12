@@ -209,7 +209,12 @@ class _InvoicePageState extends State<InvoicePage> {
     pdf.addPage(
       pw.Page(
         build: (pw.Context context) => pw.Center(
-          child: pw.Text(invoice.pdf.toString()),
+          child: pw.Column(
+            children: [
+              pw.Text('Lasku'),
+              pw.Text(invoice.pdf.toString())
+            ],
+          ),
         ),
       ),
     );
@@ -424,12 +429,23 @@ class _InvoicePageState extends State<InvoicePage> {
                                 ),
                             ],
                           ),
-                          TextButton(
-                            onPressed: () => {
-                              showInvoice(invoice),
-                            },
-                            child: const Text("Näytä lasku"),
-                          )
+                          Row(
+                            children: [
+                              TextButton(
+                                onPressed: () => {
+                                  showInvoice(invoice),
+                                },
+                                child: const Text("Näytä paperilasku"),
+                              ),
+                              const Spacer(),
+                              TextButton(
+                                onPressed: () => {
+                                  showInvoice(invoice),
+                                },
+                                child: const Text("Lähetä e-lasku"),
+                              )
+                            ],
+                          ),
                         ],
                       ),
                     ),

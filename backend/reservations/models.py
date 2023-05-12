@@ -115,31 +115,30 @@ class Invoice(models.Model):
         return total_price
 
     def get_invoice(self) -> str:
-        """
-        Returns the invoice in PDF format.
-        """
 
-        # Create pdf file in html format
+        reservation: Reservation = self.reservation
 
-        html = f"""
-        <html>
-            <head>
-                <title>Invoice</title>
-            </head>
-            <body>
-                <div>
-                    <h1>Invoice</h1>
-                    <h2>Reservation</h2>
-                    <p>Customer: {self.reservation.customer}</p>
-                    <p>Owner: {self.reservation.owner}</p>
-                    <p>Cabin: {self.reservation.cabin}</p>
-                    <p>Services: {self.reservation.get_services()}</p>
-                    <p>Check-in date: {self.reservation.start_date}</p>
-                    <p>Check-out date: {self.reservation.end_date}</p>
-                    <p>Total price: {self.total_price}</p>
-                </div>
-            </body>
-        </html>
-        """
-        return html
+        cabin = reservation.cabin
+        customer = reservation.customer
+        services = reservation.services.all()
 
+        # format nicely
+        invoice = f"Reservation for {customer.first_name} {customer.last_name}:\n\n"
+        invoice += f"Check-in: {reservation.start_date}\n"
+        invoice += f"Check-out: {reservation.end_date}\n"
+
+        invoice += f"\nCabin: {cabin.name}\n"
+        invoice += f"Price per night: {cabin.price_per_night}\n"
+        invoice += f"Total price for {reservation.length_of_stay} nights: {reservation.get_total_cabin_price()}\n"
+
+        if services:
+            invoice += f"\nServices:\n"
+            for service in services:
+                invoice += f"{service.name}: {service.service_price}\n"
+            invoice += f"Total price for services: {reservation.get_total_services_price()}\n"
+
+        invoice += f"\nTotal price: {reservation.get_total_price()}"
+
+        invoice += f"\n\nThank you for your visiting!"
+
+        return invoice
