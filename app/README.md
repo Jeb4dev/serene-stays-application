@@ -8,6 +8,8 @@ Näkymän vasemmassa laidassa on navigaatiopalkki, jonka kuvakkeita painamalla v
 
 ## Views
 
+Huom: Kaikki tiedot eivät ole välttämättä näkyvissä, ennen kuin olet kirjautunut sisään!
+
 Alueet:
     
     Tässä näkymässä voit tarkastella listaa eri alueista, muokata ja poistaa niiden tietoja, sekä avata näkymän alueen palveluista ja mökeistä. Muokkaus- ja poistonapit avaavat näkymän tietojen päivittämiseksi ja poistamiseksi. Oikeassa alakulmassa on +-nappi uuden alueen lisäykselle.
