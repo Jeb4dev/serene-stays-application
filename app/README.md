@@ -2,10 +2,6 @@
 
 Serene Stays -Flutter project
 
-## Aloitus
-
-Mene navigointipalkissa kohtaan Kirjautuminen. Paina Kirjaudu sisään nappia: tämä avaa kirjautumisnäkymän, jossa on kentät sähköposti ja salasana. Syötä nämä käyttäjätiedot kenttiin ja paina Kirjaudu-nappia kirjautuaksesi. Uudet käyttäjätunnukset voi luoda painamalla Rekisteröidy-nappia. Rekisteröityäksesi, järjestelmä vaatii myös käyttäjänimen syöttämisen keskimmäiseen tekstikenttään. 
-
 ## Navigation
 
 Näkymän vasemmassa laidassa on navigaatiopalkki, jonka kuvakkeita painamalla voi siirtyä eri näkymien välillä.
