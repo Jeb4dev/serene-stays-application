@@ -7,6 +7,8 @@ import 'package:intl/intl.dart';
 
 import '../data/Data.dart';
 import '../utils/auth.dart';
+import 'dart:html' as html;
+import 'package:pdf/widgets.dart' as pw;
 
 class ResponseData {
   final String? result;
@@ -80,7 +82,6 @@ class _InvoicePageState extends State<InvoicePage> {
       var responseData = json.decode(response.body);
 
       if (responseData['result'] == 'error') {
-        print("error ${responseData['message']}");
         return ResponseData(
             responseData['result'], responseData['message'], null);
       }
@@ -143,6 +144,7 @@ class _InvoicePageState extends State<InvoicePage> {
               (cancelledAt == null) ? null : DateTime.parse(cancelledAt),
           updatedAt: (updatedAt == null) ? null : DateTime.parse(updatedAt),
           createdAt: (createdAt == null) ? null : DateTime.parse(createdAt),
+          pdf: i['pdf'],
         ));
       }
 
@@ -199,6 +201,28 @@ class _InvoicePageState extends State<InvoicePage> {
       print("error ${responseData['message']}");
     }
     setState(() {});
+  }
+
+  Future<void> showInvoice(Invoice invoice) async {
+    final pdf = pw.Document();
+
+    pdf.addPage(
+      pw.Page(
+        build: (pw.Context context) => pw.Center(
+          child: pw.Column(
+            children: [
+              pw.Text('Lasku'),
+              pw.Text(invoice.pdf.toString())
+            ],
+          ),
+        ),
+      ),
+    );
+
+    final blob = html.Blob([await pdf.save()], 'application/pdf');
+    final url = html.Url.createObjectUrlFromBlob(blob);
+    html.window.open(url, '_blank');
+    html.Url.revokeObjectUrl(url);
   }
 
   @override
@@ -405,6 +429,23 @@ class _InvoicePageState extends State<InvoicePage> {
                                 ),
                             ],
                           ),
+                          Row(
+                            children: [
+                              TextButton(
+                                onPressed: () => {
+                                  showInvoice(invoice),
+                                },
+                                child: const Text("Näytä paperilasku"),
+                              ),
+                              const Spacer(),
+                              TextButton(
+                                onPressed: () => {
+                                  showInvoice(invoice),
+                                },
+                                child: const Text("Lähetä e-lasku"),
+                              )
+                            ],
+                          ),
                         ],
                       ),
                     ),
@@ -474,7 +515,7 @@ class _InvoicePageState extends State<InvoicePage> {
                     children: [
                       const SizedBox(height: 10),
                       const Text(
-                        "Lakutusjärjestelmä",
+                        "Laskutusjärjestelmä",
                         style: TextStyle(
                           fontSize: 20,
                           fontWeight: FontWeight.bold,

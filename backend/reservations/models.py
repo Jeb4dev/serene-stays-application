@@ -1,13 +1,10 @@
-from datetime import datetime, date
+from datetime import datetime
 from django.db import models
 from django.db.models import Q
 from users.models import User
 from cabins.models import Cabin
 from services.models import Service
 from django.core.exceptions import ValidationError
-from io import BytesIO
-from django.http import HttpResponse
-from reportlab.pdfgen import canvas
 
 
 class Reservation(models.Model):
@@ -117,37 +114,31 @@ class Invoice(models.Model):
         total_price = self.reservation.get_total_cabin_price() + self.reservation.get_total_services_price()
         return total_price
 
-    def get_invoice(self) -> HttpResponse:
-        """
-        Returns the invoice in PDF format.
-        """
-        buffer = BytesIO()
+    def get_invoice(self) -> str:
 
-        # Create the PDF object
-        p = canvas.Canvas(buffer)
+        reservation: Reservation = self.reservation
 
-        # Set up the content for the invoice
-        reservation = self.reservation
-        total_price = self.total_price
+        cabin = reservation.cabin
+        customer = reservation.customer
+        services = reservation.services.all()
 
-        # Star drawing the PDF
-        p.setFont("Helvetica", 12)
-        p.drawString(100, 700, "Reservation details:")
-        p.drawString(100, 680, f"Reservation: {reservation}")
-        p.drawString(100, 660, f"Total price: {total_price}")
+        # format nicely
+        invoice = f"Reservation for {customer.first_name} {customer.last_name}:\n\n"
+        invoice += f"Check-in: {reservation.start_date}\n"
+        invoice += f"Check-out: {reservation.end_date}\n"
 
-        # end drawing the PDF
-        p.showPage()
-        p.save()
+        invoice += f"\nCabin: {cabin.name}\n"
+        invoice += f"Price per night: {cabin.price_per_night}\n"
+        invoice += f"Total price for {reservation.length_of_stay} nights: {reservation.get_total_cabin_price()}\n"
 
-        # Set the buffer's filepointer at the beginning
-        buffer.seek(0)
+        if services:
+            invoice += f"\nServices:\n"
+            for service in services:
+                invoice += f"{service.name}: {service.service_price}\n"
+            invoice += f"Total price for services: {reservation.get_total_services_price()}\n"
 
-        # Create a HttpResponse object with the appropriate PDF headers
-        response = HttpResponse(content_type='application/pdf')
-        response['Content-Disposition'] = 'attachment; filename="invoice.pdf"'
+        invoice += f"\nTotal price: {reservation.get_total_price()}"
 
-        # Write the PDF buffer to the HttpResponse
-        response.write(buffer.getvalue())
-        
-        return response
+        invoice += f"\n\nThank you for your visiting!"
+
+        return invoice
