@@ -260,7 +260,7 @@ class _AddNewReservationState extends State<AddNewReservation> {
         HttpHeaders.authorizationHeader: 'Bearer $token',
       },
     );
-
+    print(json.decode(response.body));
     if (response.statusCode == 200) {
       var responseData = json.decode(response.body);
       setState(() {
@@ -301,7 +301,7 @@ class _AddNewReservationState extends State<AddNewReservation> {
       });
     } else {
       // Handle error
-      print('Failed to fetch services: ${response.statusCode}');
+      print('Failed to fetch users: ${response.statusCode} ${response.body} ');
     }
   }
 
