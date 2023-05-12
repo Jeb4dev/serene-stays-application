@@ -10,7 +10,7 @@ import '../utils/auth.dart';
 
 class ResponseData {
   final String message;
-  final User user;
+  final User? user;
 
   ResponseData(this.message, this.user);
 }
@@ -29,6 +29,15 @@ class LogoutPage extends StatelessWidget {
       },
     );
     var responseData = json.decode(response.body);
+
+    print(responseData);
+
+    if (response.statusCode != 200) {
+      User user =
+          User('Unknown user', 'email@email.com', null, null, null, null, null);
+      return ResponseData(responseData['result'], user);
+    }
+
     User user = User(
         responseData['data']['username'],
         responseData['data']['email'],
@@ -55,7 +64,7 @@ class LogoutPage extends StatelessWidget {
                   child: Column(
                     mainAxisAlignment: MainAxisAlignment.center,
                     children: [
-                      Text("Tervetuloa, ${data.user.username}!"),
+                      Text("Tervetuloa, ${data.user!.username}!"),
                       const Icon(Icons.key, size: 100),
                       const SizedBox(height: 16),
                       ElevatedButton(
