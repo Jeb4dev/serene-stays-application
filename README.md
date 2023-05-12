@@ -2,6 +2,8 @@
 
 Ohjelmistotuotanto 1 UEF
 
+## [OHJEET OPETTAJALLE](https://github.com/Jeb4dev/ohjelmistotuotanto)
+
 ## Project structure
 
 ### [Backend](/backend/README.md)
