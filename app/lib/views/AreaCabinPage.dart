@@ -153,7 +153,8 @@ class _AreaItemsPageState extends State<AreaItemsPage> {
           'name': name,
           'description': description,
           'price_per_night': price,
-          'zip_code': address,
+          'zip_code': 10110,
+          'address': address,
           'num_of_beds': beds,
           'area': widget.area.name
         }),
@@ -377,7 +378,8 @@ class _AreaItemsPageState extends State<AreaItemsPage> {
           "name": name,
           "description": description,
           "price_per_night": price,
-          "zip_code": address,
+          'zip_code': 10110,
+          'address': address,
           "num_of_beds": beds
         }),
         headers: {

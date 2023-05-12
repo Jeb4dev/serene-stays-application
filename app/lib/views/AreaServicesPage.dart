@@ -75,6 +75,7 @@ class _AreaServicesPageState extends State<AreaServicesPage> {
           'name': name,
           'description': description,
           'service_price': servicePrice,
+          'area': widget.area.name.toString()
         }),
         headers: {
           "Content-Type": "application/json",
@@ -96,10 +97,10 @@ class _AreaServicesPageState extends State<AreaServicesPage> {
         return ResponseData(data['result'].toString(), [service]);
       }
       return ResponseData(data['message'].toString(),
-          [Service(0, "null", "null", "null" as int)]);
+          [Service(0, "null", "null", 0)]);
     } catch (e) {
       return ResponseData(
-          e.toString(), [Service(0, "null", "null", "null" as int)]);
+          e.toString(), [Service(0, "null", "null", 0)]);
     }
   }
 
@@ -202,8 +203,10 @@ class _AreaServicesPageState extends State<AreaServicesPage> {
               onPressed: () async {
                 var response = await addService(
                     _serviceNameController.text,
+                    _serviceDescriptionController.text,
                     _servicePriceController.text,
-                    _serviceDescriptionController.text,);
+
+                );
                 if (response.message == "null") {
                   Navigator.of(context).pop();
                   ScaffoldMessenger.of(context).showSnackBar(const SnackBar(

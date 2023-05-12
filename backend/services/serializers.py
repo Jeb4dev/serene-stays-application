@@ -11,4 +11,5 @@ class ServiceSerializer(serializers.ModelSerializer):
         id_fields = ['created_at', 'updated_at']
         extra_kwargs = {
             'id': {'required': False},
+            'vat_price': {'required': False, 'default': 0},
         }

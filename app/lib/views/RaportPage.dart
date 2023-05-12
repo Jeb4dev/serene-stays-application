@@ -248,7 +248,6 @@ class _RaportPageState extends State<RaportPage> {
                   return Text('${user.username}: $income €',
                       style: TextStyle(fontSize: 18));
                 }),
-
               ],
             ),
           ),
