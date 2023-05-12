@@ -5,6 +5,9 @@ from users.models import User
 from cabins.models import Cabin
 from services.models import Service
 from django.core.exceptions import ValidationError
+from io import BytesIO
+from django.http import HttpResponse
+from reportlab.pdfgen import canvas
 
 
 class Reservation(models.Model):
@@ -114,9 +117,37 @@ class Invoice(models.Model):
         total_price = self.reservation.get_total_cabin_price() + self.reservation.get_total_services_price()
         return total_price
 
-    def get_invoice(self) -> str:
+    def get_invoice(self) -> HttpResponse:
         """
         Returns the invoice in PDF format.
         """
-        invoice = ""
-        return invoice
+        buffer = BytesIO()
+
+        # Create the PDF object
+        p = canvas.Canvas(buffer)
+
+        # Set up the content for the invoice
+        reservation = self.reservation
+        total_price = self.total_price
+
+        # Star drawing the PDF
+        p.setFont("Helvetica", 12)
+        p.drawString(100, 700, "Reservation details:")
+        p.drawString(100, 680, f"Reservation: {reservation}")
+        p.drawString(100, 660, f"Total price: {total_price}")
+
+        # end drawing the PDF
+        p.showPage()
+        p.save()
+
+        # Set the buffer's filepointer at the beginning
+        buffer.seek(0)
+
+        # Create a HttpResponse object with the appropriate PDF headers
+        response = HttpResponse(content_type='application/pdf')
+        response['Content-Disposition'] = 'attachment; filename="invoice.pdf"'
+
+        # Write the PDF buffer to the HttpResponse
+        response.write(buffer.getvalue())
+        
+        return response

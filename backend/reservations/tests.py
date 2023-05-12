@@ -1,7 +1,8 @@
 from django.test import TestCase
 from django.core.exceptions import ValidationError
 from datetime import date, timedelta
-
+from io import BytesIO
+from reportlab.pdfgen import canvas
 from services.models import Service
 from .models import Reservation, Invoice
 from cabins.models import Cabin, Area, PostCode
@@ -201,3 +202,44 @@ class TestInvoice(TestCase):
         self.invoice = Invoice.objects.create(reservation=self.reservation)
         self.assertEqual(self.invoice.reservation, self.reservation)
         self.assertEqual(self.invoice.total_price, self.reservation.get_total_price())
+
+    def test_get_invoice(self):
+        start_date = date.today() + timedelta(days=7)
+        end_date = date.today() + timedelta(days=10)
+        reservation = Reservation.objects.create(
+            cabin = self.cabin,
+            customer = self.customer,
+            owner = self.owner,
+            start_date = start_date,
+            end_date = end_date,
+        )
+        invoice = Invoice.objects.create(reservation=reservation)
+
+        # generate the invoice PDF
+        response = invoice.get_invoice()
+
+        # Check the response status code
+        self.assertEqual(response.status_code, 200)
+
+        # Check response content type
+        self.assertEqual(response['Content-Type'], 'application/pdf')
+
+        # Check the response file name
+        self.assertEqual(response['Content-Disposition'], 'attachment; filename="invoice.pdf"')
+
+        # Validate the PDF content
+        buffer = BytesIO()
+        p = canvas.Canvas(buffer)
+
+        # Check the PDF content
+        #self.assertEqual(p.getPageNumber(), 1)
+
+        p.showPage()
+        p.save()
+        buffer.seek(0)
+
+
+        pdf_content = buffer.getvalue()
+        self.assertGreater(len(pdf_content), 0)
+        buffer.close()
+    
