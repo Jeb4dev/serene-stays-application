@@ -2,7 +2,7 @@ import 'dart:convert';
 
 import 'package:flutter/material.dart';
 import 'package:http/http.dart';
-import 'package:serene_stays_app/screens/HomePage.dart';
+import 'HomePage.dart';
 
 import '../utils/auth.dart';
 import 'LoginPage.dart';
