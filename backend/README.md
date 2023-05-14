@@ -14,7 +14,8 @@ It handles all the requests from the frontend and communicates with the database
 1. Create a virtual environment and activate it
 2. Install the requirements with `pip install -r requirements.txt`
 3. Run the migrations with `python manage.py migrate`
-4. Run the server with `python manage.py runserver`
+4. Create Django Super User with `python manage.py createsuperuser`
+5. Run the server with `python manage.py runserver`
 
 ## Development
 
@@ -25,6 +26,8 @@ It handles all the requests from the frontend and communicates with the database
 ## API
 
 ### Endpoints
+
+Warning: This list is not complete!
 
 - `/api/user/login/` - Login user with username and password
 - `/api/user/logout/` - Logout user with token
@@ -70,10 +73,12 @@ It handles all the requests from the frontend and communicates with the database
 
 To run the tests, run `python manage.py test`.
 
+Additionally, you can only run specific test with `python manage.py test <collection>`
+
 
 ## License
 
-This project is licensed under the ??? License - see the [LICENSE](/LICENSE) file for details.
+This project is licensed under the [GNU GPLv3](https://choosealicense.com/licenses/gpl-3.0/) License.
 
 ## Resources
 
