@@ -56,7 +56,7 @@ class TestReservation(TestCase):
         # Create a reservation for the cabin
         start_date = date.today() + timedelta(days=7)
         end_date = date.today() + timedelta(days=10)
-        reservation = Reservation.objects.create(
+        Reservation.objects.create(
             cabin=self.cabin,
             customer=self.customer,
             owner=self.owner,

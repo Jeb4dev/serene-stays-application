@@ -41,7 +41,7 @@ def get_service(request):
     try:
         area = request.GET.get("area")
         name = request.GET.get("name")
-        description = request.GET.get("description")  # how to tie to service name?
+        request.GET.get("description")  # how to tie to service name?
         service_price = request.GET.get("service_price")
         vat_price = request.GET.get("vat_price")
 

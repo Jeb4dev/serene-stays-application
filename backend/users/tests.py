@@ -233,7 +233,7 @@ class TestUser(APITestCase):
         """
         Test get user information with expired token.
         """
-        login_data = self.create_user()
+        self.create_user()
         payload = {
             "id": 1,
             "exp": datetime.datetime.utcnow() + datetime.timedelta(seconds=1),
