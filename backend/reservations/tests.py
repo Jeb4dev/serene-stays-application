@@ -1,12 +1,14 @@
-from django.test import TestCase
-from django.core.exceptions import ValidationError
 from datetime import date, timedelta
 from io import BytesIO
+
+from django.core.exceptions import ValidationError
+from django.test import TestCase
 from reportlab.pdfgen import canvas
-from services.models import Service
-from .models import Reservation, Invoice
+
 from cabins.models import Cabin, Area, PostCode
+from services.models import Service
 from users.models import User
+from .models import Reservation, Invoice
 
 
 # Create your tests here.

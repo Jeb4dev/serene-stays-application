@@ -1,4 +1,5 @@
 from django.urls import path
+
 from .views import register, login, logout, get_data, update_data, delete_data
 
 urlpatterns = [

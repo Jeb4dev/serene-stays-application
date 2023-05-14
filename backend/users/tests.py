@@ -1,8 +1,10 @@
 import datetime
 import time
+
 import jwt
 from rest_framework import status
 from rest_framework.test import APIClient, APITestCase
+
 from conf.settings import JWT_SECRET
 from users.models import User
 

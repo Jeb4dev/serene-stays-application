@@ -1,5 +1,4 @@
 from django.http import Http404
-from django.shortcuts import render
 from rest_framework import status
 from rest_framework.decorators import api_view
 from rest_framework.exceptions import ValidationError
@@ -7,7 +6,7 @@ from rest_framework.generics import get_object_or_404
 from rest_framework.response import Response
 
 from cabins.models import Cabin, Area
-from cabins.serializers import CabinSerializer, PostCodeSerializer, AreaSerializer
+from cabins.serializers import CabinSerializer, AreaSerializer
 
 
 @api_view(["POST"])

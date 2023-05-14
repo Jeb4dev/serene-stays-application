@@ -1,8 +1,9 @@
 from decimal import Decimal
-from rest_framework import status
+
 from rest_framework.test import APITestCase
+
+from cabins.models import Area
 from .models import Service
-from cabins.models import Cabin, Area, PostCode
 
 
 class ServiceTests(APITestCase):

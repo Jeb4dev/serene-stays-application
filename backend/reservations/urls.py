@@ -1,6 +1,7 @@
 from django.urls import path
-from .views import create_reservation, get_reservations, update_reservation, delete_reservation
+
 from .views import create_invoice, get_invoices, update_invoice, delete_invoice
+from .views import create_reservation, get_reservations, update_reservation, delete_reservation
 
 urlpatterns = [
     path("create", create_reservation, name="create_reservation"),

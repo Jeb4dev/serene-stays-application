@@ -1,6 +1,7 @@
 from django.urls import path, include
-from .views import create_cabin, get_cabins, update_cabin, delete_cabin
+
 from .views import create_area, get_areas, update_area, delete_area
+from .views import create_cabin, get_cabins, update_cabin, delete_cabin
 
 urlpatterns = [
     path("create", create_area),

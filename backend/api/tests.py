@@ -1,8 +1,8 @@
 import datetime
 import json
 
-from rest_framework.test import APIClient, APITestCase
 from rest_framework import status
+from rest_framework.test import APIClient, APITestCase
 
 from cabins.models import Area, PostCode, Cabin
 from reservations.models import Reservation, Invoice
