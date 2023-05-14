@@ -22,6 +22,20 @@ def get_token(request):
     return None
 
 
+def get_user_from_token(token):
+    if not token:
+        raise AuthenticationFailed("Unauthenticated!")
+
+    try:
+        payload = jwt.decode(token, JWT_SECRET, algorithms=["HS256"])
+    except jwt.ExpiredSignatureError:
+        raise AuthenticationFailed("Unauthenticated!")
+
+    user = User.objects.filter(id=payload["id"]).first()
+
+    return user
+
+
 @api_view(["POST"])
 def register(request):
     """
@@ -36,21 +50,6 @@ def register(request):
         serializer = UserSerializer(data=request.data)
         serializer.is_valid(raise_exception=True)
         serializer.save()
-
-        # Create a new OAuth token for the user -- NOT IMPLEMENTED
-        # app = Application.objects.first()  # Get the first registered application
-        # token = AccessToken.objects.create(
-        #     user=user,
-        #     application=app,
-        #     expires=timezone.now() + timedelta(days=1),
-        #     scope="read write"
-        # )
-        #
-        # return Response({
-        #     "result": "success",
-        #     "data": serializer.data,
-        #     "access_token": token.token
-        # }, status=status.HTTP_201_CREATED)
 
         return Response({"result": "success", "data": serializer.data}, status=status.HTTP_201_CREATED)
 
@@ -122,7 +121,7 @@ def logout(request):
     try:
         response = Response()
         response.delete_cookie("jwt")
-        token = get_token(request)
+        get_token(request)
         response.headers["Authorization"] = ""
         response.data = {"result": "success", "message": "Successfully logged out!"}
         response.status = status.HTTP_200_OK
@@ -144,17 +143,7 @@ def get_data(request):
 
     # Try to get all users
     try:
-        token = get_token(request)
-
-        if not token:
-            raise AuthenticationFailed("Unauthenticated!")
-
-        try:
-            payload = jwt.decode(token, JWT_SECRET, algorithms=["HS256"])
-        except jwt.ExpiredSignatureError:
-            raise AuthenticationFailed("Unauthenticated!")
-
-        user = User.objects.filter(id=payload["id"]).first()
+        user = get_user_from_token(get_token(request))
 
         if user.is_staff:
             users = User.objects.all()
@@ -232,17 +221,7 @@ def delete_data(request):
 
     # Try to get all users
     try:
-        token = get_token(request)
-
-        if not token:
-            raise AuthenticationFailed("Unauthenticated!")
-
-        try:
-            payload = jwt.decode(token, JWT_SECRET, algorithms=["HS256"])
-        except jwt.ExpiredSignatureError:
-            raise AuthenticationFailed("Unauthenticated!")
-
-        user = User.objects.filter(id=payload["id"]).first()
+        user = get_user_from_token(get_token(request))
 
         user_username = request.GET.get("user")
 
