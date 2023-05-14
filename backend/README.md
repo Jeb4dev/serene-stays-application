@@ -75,10 +75,10 @@ To run the tests, run `python manage.py test`.
 
 Additionally, you can only run specific test with `python manage.py test <collection>`
 
-
 ## License
 
-This project is licensed under the [GNU GPLv3](https://choosealicense.com/licenses/gpl-3.0/) License.
+This project is licensed under the [GNU GPLv3](https://choosealicense.com/licenses/gpl-3.0/) License - see
+the [LICENSE](/LICENSE) file for details.
 
 ## Resources
 

@@ -1,16 +1,18 @@
-# ohjelmistotuotanto
+# Serene Stays
 
-Ohjelmistotuotanto 1 UEF
-Group_33
-
-## [OHJEET OPETTAJALLE](https://github.com/Jeb4dev/ohjelmistotuotanto)
+## OT1 | UEF | Group_33
 
 ## Project structure
 
-### [Backend](/backend/README.md)
+- ### [Backend](/backend/README.md)
 
-REST API for the application build with Django REST Framework.
+    REST API for the application build with Django REST Framework.
 
-### [App](/app/README.md)
+- ### [Frontend](/app/README.md)
 
-Flutter application for end users.
+    Flutter application for end users.
+
+## License
+
+This project is licensed under the [GNU GPLv3](https://choosealicense.com/licenses/gpl-3.0/) License - see
+the [LICENSE](/LICENSE) file for details.
