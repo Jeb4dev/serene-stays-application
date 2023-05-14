@@ -78,7 +78,7 @@ class Reservation(models.Model):
             services.append((service.name, service.service_price))
         return services
 
-    def is_cabin_available(cabin, check_in_date, check_out_date):
+    def is_cabin_available(self, check_in_date, check_out_date):
         """
         Checks if given cabin is available for the specified
         check-in and check-out dates.
@@ -90,7 +90,7 @@ class Reservation(models.Model):
         if check_in_date >= check_out_date:
             return False
         overlapping_reservations = Reservation.objects.filter(
-            cabin=cabin, start_date__lt=check_out_date, end_date__gt=check_in_date
+            cabin=self, start_date__lt=check_out_date, end_date__gt=check_in_date
         )
         return not overlapping_reservations.exists()
 
