@@ -3,5 +3,5 @@ djangorestframework
 django-oauth-toolkit
 django-cors-headers
 djangorestframework-simplejwt
-black # code formatter
+black
 reportlab
