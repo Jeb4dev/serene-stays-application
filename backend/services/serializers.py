@@ -7,9 +7,9 @@ class ServiceSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = Service
-        fields = ['id', 'area', 'name', 'description', 'service_price', 'vat_price']
-        id_fields = ['created_at', 'updated_at']
+        fields = ["id", "area", "name", "description", "service_price", "vat_price"]
+        id_fields = ["created_at", "updated_at"]
         extra_kwargs = {
-            'id': {'required': False},
-            'vat_price': {'required': False, 'default': 0},
+            "id": {"required": False},
+            "vat_price": {"required": False, "default": 0},
         }

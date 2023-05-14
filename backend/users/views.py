@@ -246,14 +246,18 @@ def delete_data(request):
         user_username = request.GET.get("user")
 
         if user_username is None:
-            return Response({"result": "error", "data": "Please provide a username!"}, status=status.HTTP_400_BAD_REQUEST)
+            return Response(
+                {"result": "error", "data": "Please provide a username!"}, status=status.HTTP_400_BAD_REQUEST
+            )
 
         if user.is_staff:
             user_to_delete = get_object_or_404(User, username=user_username)
             user_to_delete.delete()
             return Response({"result": "success", "data": "User deleted successfully!"}, status=status.HTTP_200_OK)
 
-        return Response({"result": "error", "data": "Only admin can delete users!"}, status=status.HTTP_401_UNAUTHORIZED)
+        return Response(
+            {"result": "error", "data": "Only admin can delete users!"}, status=status.HTTP_401_UNAUTHORIZED
+        )
 
     # Catch authentication errors and return a 401 response
     except AuthenticationFailed as e:

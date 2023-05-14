@@ -9,9 +9,7 @@ class ReservationSerializer(serializers.ModelSerializer):
     Serializer for the Cabin model.
     """
 
-    price = serializers.SerializerMethodField(
-        method_name="get_price"
-    )
+    price = serializers.SerializerMethodField(method_name="get_price")
 
     class Meta:
         model = Reservation
@@ -35,7 +33,6 @@ class ReservationSerializer(serializers.ModelSerializer):
         }
 
         read_only_fields = ["id", "updated_at"]
-
 
         def create(self, validated_data):
             instance = self.Meta.model(**validated_data)
@@ -69,20 +66,17 @@ class ReservationSerializer(serializers.ModelSerializer):
 
     def get_price(self, obj):
         return obj.get_total_price()
-    
 
 
 class InvoiceSerializer(serializers.ModelSerializer):
     """
     Serializer for the Invoice model.
     """
-    customer = serializers.CharField(source='reservation.customer.username')
-    reservation_id = serializers.CharField(source='reservation.id')
-    reservation_cabin_area = serializers.CharField(source='reservation.cabin.area.area')
-    pdf = serializers.SerializerMethodField(
-        method_name="get_invoice"
-    )
 
+    customer = serializers.CharField(source="reservation.customer.username")
+    reservation_id = serializers.CharField(source="reservation.id")
+    reservation_cabin_area = serializers.CharField(source="reservation.cabin.area.area")
+    pdf = serializers.SerializerMethodField(method_name="get_invoice")
 
     class Meta:
         model = Invoice
@@ -134,5 +128,6 @@ class InvoiceSerializer(serializers.ModelSerializer):
             instance.save()
 
             return instance
+
     def get_invoice(self, obj):
         return obj.get_invoice()

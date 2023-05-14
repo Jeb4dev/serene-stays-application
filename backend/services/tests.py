@@ -13,15 +13,16 @@ class ServiceTests(APITestCase):
     successfully, and the other methods check that each attribute is set
     correctly.
     """
+
     def setUp(self):
-        self.area=Area.objects.create(area="Helsinki")
-        #self.post=PostCode.objects.create(p_code='00070', postal_district="Helsinki")
+        self.area = Area.objects.create(area="Helsinki")
+        # self.post=PostCode.objects.create(p_code='00070', postal_district="Helsinki")
         self.service = Service.objects.create(
             area=self.area,
             name="Sauna 66",
             description="Sauna 66 description",
             service_price=Decimal("25.00"),
-            vat_price=Decimal("30.00")
+            vat_price=Decimal("30.00"),
         )
 
     def test_service_creation(self):
@@ -33,7 +34,7 @@ class ServiceTests(APITestCase):
 
     def test_service_name(self):
         self.assertEqual(self.service.name, "Sauna 66")
-    
+
     def test_service_description(self):
         self.assertEqual(self.service.description, "Sauna 66 description")
 
@@ -42,7 +43,3 @@ class ServiceTests(APITestCase):
 
     def test_service_vat_price(self):
         self.assertEqual(self.service.vat_price, Decimal("30.00"))
-
-
-    
-

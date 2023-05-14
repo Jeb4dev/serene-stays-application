@@ -323,4 +323,3 @@ class TestUser(APITestCase):
         self.client.credentials(HTTP_AUTHORIZATION=f"Bearer {token}")
         response = self.client.delete(f"/api/user/delete?user={self._data['username']}")
         self.assertEqual(response.status_code, status.HTTP_401_UNAUTHORIZED)
-

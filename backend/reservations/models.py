@@ -20,21 +20,23 @@ class Reservation(models.Model):
     end_date = models.DateField(null=False, blank=False)
     created_at = models.DateTimeField(auto_now_add=True)  # When the reservation was created by the customer
     accepted_at = models.DateTimeField(null=True, blank=True)  # When the reservation was accepted by the owner or staff
-    canceled_at = models.DateTimeField(null=True, blank=True)  # When the reservation was canceled by the customer or staff
+    canceled_at = models.DateTimeField(
+        null=True, blank=True
+    )  # When the reservation was canceled by the customer or staff
 
     def __str__(self):
         return f"{self.cabin} {self.customer} {self.start_date} {self.end_date}"
-    
+
     # Q object to query the database for any reservations that overlap the new reservation.
     def clean(self):
         super().clean()
         overlapping_reservations = Reservation.objects.filter(
-            Q(start_date__range=(self.start_date, self.end_date)) |
-            Q(end_date__range=(self.start_date, self.end_date)) |
-            Q(start_date__lte=self.start_date, end_date__gte=self.end_date)
+            Q(start_date__range=(self.start_date, self.end_date))
+            | Q(end_date__range=(self.start_date, self.end_date))
+            | Q(start_date__lte=self.start_date, end_date__gte=self.end_date)
         ).exclude(pk=self.pk)
         if overlapping_reservations.exists():
-            raise ValidationError({'__all__': ['Reservation overlaps with an existing booking.']})
+            raise ValidationError({"__all__": ["Reservation overlaps with an existing booking."]})
 
     @property
     def length_of_stay(self) -> int:
@@ -73,7 +75,7 @@ class Reservation(models.Model):
         for service in self.services.all():
             services.append((service.name, service.service_price))
         return services
-    
+
     def is_cabin_available(cabin, check_in_date, check_out_date):
         """
         Checks if given cabin is available for the specified
@@ -86,9 +88,7 @@ class Reservation(models.Model):
         if check_in_date >= check_out_date:
             return False
         overlapping_reservations = Reservation.objects.filter(
-            cabin=cabin,
-            start_date__lt=check_out_date,
-            end_date__gt=check_in_date
+            cabin=cabin, start_date__lt=check_out_date, end_date__gt=check_in_date
         )
         return not overlapping_reservations.exists()
 
@@ -97,6 +97,7 @@ class Invoice(models.Model):
     """
     Model for an invoice for a reservation.
     """
+
     reservation = models.ForeignKey(Reservation, on_delete=models.CASCADE)
     created_at = models.DateTimeField(auto_now_add=True)  # When the invoice was created
     paid_at = models.DateTimeField(null=True, blank=True)  # When the invoice was paid
@@ -115,7 +116,6 @@ class Invoice(models.Model):
         return total_price
 
     def get_invoice(self) -> str:
-
         reservation: Reservation = self.reservation
 
         cabin = reservation.cabin

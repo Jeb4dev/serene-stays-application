@@ -55,33 +55,34 @@ class TestReservation(TestCase):
         start_date = date.today() + timedelta(days=7)
         end_date = date.today() + timedelta(days=10)
         reservation = Reservation.objects.create(
-            cabin = self.cabin,
-            customer = self.customer,
-            owner = self.owner,
-            start_date = start_date,
-            end_date = end_date,
+            cabin=self.cabin,
+            customer=self.customer,
+            owner=self.owner,
+            start_date=start_date,
+            end_date=end_date,
         )
         # create a new reservation that overlaps with the existing
         new_start_date = start_date + timedelta(days=1)
         new_end_date = end_date + timedelta(days=1)
-        #print(f"Existing reservation: {reservation.start_date} - {reservation.end_date}")
-        #print(f"New reservation: {new_start_date} - {new_end_date}")
-        new_reservation=Reservation.objects.create(
-            cabin = self.cabin,
-            customer = self.customer,
-            owner = self.owner,
-            start_date = new_start_date,
-            end_date = new_end_date, 
+        # print(f"Existing reservation: {reservation.start_date} - {reservation.end_date}")
+        # print(f"New reservation: {new_start_date} - {new_end_date}")
+        new_reservation = Reservation.objects.create(
+            cabin=self.cabin,
+            customer=self.customer,
+            owner=self.owner,
+            start_date=new_start_date,
+            end_date=new_end_date,
         )
         with self.assertRaises(ValidationError) as cm:
             new_reservation.clean()
-        self.assertDictEqual({'__all__': ['Reservation overlaps with an existing booking.']}, cm.exception.message_dict)
+        self.assertDictEqual({"__all__": ["Reservation overlaps with an existing booking."]}, cm.exception.message_dict)
 
     def test_is_cabin_available(self):
         # Is the cabin available for the date range that doesn't
         # overlap with the existing reservation.
-        available = Reservation.is_cabin_available(self.cabin, date.today() + timedelta(days=5),
-                                                    date.today() + timedelta(days=6))
+        available = Reservation.is_cabin_available(
+            self.cabin, date.today() + timedelta(days=5), date.today() + timedelta(days=6)
+        )
         self.assertTrue(available)
 
     # def test_cabin_not_available(self):
@@ -93,8 +94,9 @@ class TestReservation(TestCase):
 
     def test_invalid_date_range(self):
         # Test that the method returns false when check-in date is after check-out date
-        available = Reservation.is_cabin_available(self.cabin, date.today() + timedelta(days=6),
-                                                   date.today() + timedelta(days=5))
+        available = Reservation.is_cabin_available(
+            self.cabin, date.today() + timedelta(days=6), date.today() + timedelta(days=5)
+        )
         self.assertFalse(available)
 
     def test_calculate_length_of_stay(self):
@@ -169,6 +171,7 @@ class TestReservation(TestCase):
         )
         self.assertEqual(self.reservation.get_total_price(), expected_price)
 
+
 class TestInvoice(TestCase):
     def setUp(self) -> None:
         self.area = Area.objects.create(area="Helsinki")
@@ -207,11 +210,11 @@ class TestInvoice(TestCase):
         start_date = date.today() + timedelta(days=7)
         end_date = date.today() + timedelta(days=10)
         reservation = Reservation.objects.create(
-            cabin = self.cabin,
-            customer = self.customer,
-            owner = self.owner,
-            start_date = start_date,
-            end_date = end_date,
+            cabin=self.cabin,
+            customer=self.customer,
+            owner=self.owner,
+            start_date=start_date,
+            end_date=end_date,
         )
         invoice = Invoice.objects.create(reservation=reservation)
 
@@ -222,24 +225,22 @@ class TestInvoice(TestCase):
         self.assertEqual(response.status_code, 200)
 
         # Check response content type
-        self.assertEqual(response['Content-Type'], 'application/pdf')
+        self.assertEqual(response["Content-Type"], "application/pdf")
 
         # Check the response file name
-        self.assertEqual(response['Content-Disposition'], 'attachment; filename="invoice.pdf"')
+        self.assertEqual(response["Content-Disposition"], 'attachment; filename="invoice.pdf"')
 
         # Validate the PDF content
         buffer = BytesIO()
         p = canvas.Canvas(buffer)
 
         # Check the PDF content
-        #self.assertEqual(p.getPageNumber(), 1)
+        # self.assertEqual(p.getPageNumber(), 1)
 
         p.showPage()
         p.save()
         buffer.seek(0)
 
-
         pdf_content = buffer.getvalue()
         self.assertGreater(len(pdf_content), 0)
         buffer.close()
-    
