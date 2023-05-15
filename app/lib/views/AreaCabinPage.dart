@@ -58,7 +58,6 @@ class _AreaItemsPageState extends State<AreaItemsPage> {
           description: c['description'],
           address: c['address'],
         );
-        print(cabin);
         _cabins.add(cabin);
       }
 

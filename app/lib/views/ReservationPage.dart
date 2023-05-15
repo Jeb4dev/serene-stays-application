@@ -260,7 +260,6 @@ class _AddNewReservationState extends State<AddNewReservation> {
         HttpHeaders.authorizationHeader: 'Bearer $token',
       },
     );
-    print(json.decode(response.body));
     if (response.statusCode == 200) {
       var responseData = json.decode(response.body);
       setState(() {

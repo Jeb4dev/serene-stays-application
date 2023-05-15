@@ -43,7 +43,7 @@ class _LoginPageState extends State<LoginPage> {
       setState(() {
         errorText = 'Login failed, please try again later';
       });
-      print(e);
+      print("error $e");
     }
 
     if (errorText == '') {

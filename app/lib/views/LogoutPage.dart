@@ -30,8 +30,6 @@ class LogoutPage extends StatelessWidget {
     );
     var responseData = json.decode(response.body);
 
-    print(responseData);
-
     if (response.statusCode != 200) {
       User user =
           User('Unknown user', 'email@email.com', null, null, null, null, null);
