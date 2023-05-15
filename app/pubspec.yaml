@@ -38,6 +38,7 @@ dependencies:
   http:
   flutter_secure_storage:
   intl:
+  pdf:
 
 dev_dependencies:
   flutter_test:
